@@ -25,7 +25,7 @@ library("gdata")
 ### INPUTS: Enter the proper locations and files for analysis ###
 
 DataFile = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Data/20150914_Cell_Growth_Drew_FUdR_Effect-E3-P1.csv"
-PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/PlateInfo/CGR-E3_PlateInfo.csv"
+PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/PlateInfo/20150914_Cell_Growth_Drew_FUdR_Effect_PlateInfo.csv"
 TreatmentInfo = "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20150914_Cell_Growth_Drew_FUdR_Effect-E3_TreatmentInfo.csv"
 
 ExperimentNumber = 3 # ADD THE REPLICATE NUMBER HERE
@@ -185,7 +185,7 @@ SATURATION = 7
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
     GroFit_df[k,PLATE] = GroFitResults[[i]][[j]]$Plate
-    GroFit_df[k, TREATMENT] = GroFitResults[[i]][[j]]$Treatment
+    GroFit_df[k,TREATMENT] = GroFitResults[[i]][[j]]$Treatment
     GroFit_df[k,STRAIN] = GroFitResults[[i]][[j]]$Strain
     GroFit_df[k,SPECIES] = GroFitResults[[i]][[j]]$Species
     GroFit_df[k,LAG] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
