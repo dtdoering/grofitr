@@ -160,8 +160,8 @@ for(i in 1:length(PlateNames)){
     GroFitResults[[i]][[j]] = list()
     GroFitResults[[i]][[j]]$Plate = PlateNames[[i]]
     GroFitResults[[i]][[j]]$Treatment = get(PlateNames[[i]])[j,"Treatment"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Strain = get(PlateNames[[i]])[j,"Name"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Species = get(PlateNames[[i]])[j, "Species"] # MODIFY TO RELEVANT PLATE INFORMATION
+    GroFitResults[[i]][[j]]$Strain = get(PlateNames[[i]])[j,"Strain"] # MODIFY TO RELEVANT PLATE INFORMATION
+    GroFitResults[[i]][[j]]$Species = get(PlateNames[[i]])[j, "Media"] # MODIFY TO RELEVANT PLATE INFORMATION
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
     GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
     GroFitResults[[i]][[j]]$GroFitResults =grofit(TimeData, GrowthData, control=grofit.control(suppress.messages = TRUE, fit.opt = "m", interactive = FALSE, model.type=c("logistic"), nboot.gc= 0, smooth.gc  = 5))
