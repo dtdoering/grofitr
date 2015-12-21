@@ -204,6 +204,7 @@ write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Dat
 # SET DIRECTORY TO SAVE PDF OUTPUT TO #
 pdf(paste(plot_dest, format(Sys.time(), "%Y%m%d-%H%M"), "_GrowthCurves.pdf", sep = ""))
 print(noquote("Plotting curves..."))
+
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
     times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
