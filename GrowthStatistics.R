@@ -77,10 +77,10 @@ write.csv(Growth_Tukey[[1]], file = "GrowthRate_TukeyHSD.csv")
 
 
 
-a = ggplot(SummaryStats, aes(y = AvgGrowth, x = Strain))
-a = a + geom_bar(stat = "identity", fill = "white")
-a = a + geom_errorbar(aes(ymin=AvgGrowth-StErGrowth, ymax=AvgGrowth+StErGrowth))
-a = a + coord_flip()
+a = ggplot(SummaryStats, aes(y = AvgGrowth, x = Strain)) +
+geom_bar(stat = "identity", fill = "white") +
+geom_errorbar(aes(ymin=AvgGrowth-StErGrowth, ymax=AvgGrowth+StErGrowth)) +
+coord_flip()
 
 Saturation_AOV = aov(Saturation ~ Strain, data = GrowthData_df)
 summary(Saturation_AOV)
