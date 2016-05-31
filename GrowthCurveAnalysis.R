@@ -24,14 +24,14 @@ library("gdata")
 
 ### INPUTS: Enter the proper locations and files for analysis ###
 
-DataFile = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Data/20150914_Cell_Growth_Drew_FUdR_Effect-E3-P1.csv"
-PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/PlateInfo/20150914_Cell_Growth_Drew_FUdR_Effect_PlateInfo.csv"
-TreatmentInfo = "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20150914_Cell_Growth_Drew_FUdR_Effect-E3_TreatmentInfo.csv"
+DataFile = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/2016-01-21-StackerData/MFC4_trimmed-E2-P1.csv"
+PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/PlateInfo/2016-01-28-GroFitPlateInfo_MFC4.csv"
+TreatmentInfo =           "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20160128_MFC4-E2_TreatmentInfo.csv"
 
-ExperimentNumber = 3 # ADD THE REPLICATE NUMBER HERE
+ExperimentNumber = 2 # ADD THE REPLICATE NUMBER HERE
 NumberOfPlates= 1 # ADD NUMBER OF PLATES HERE
 
-df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/GroFit_df.csv"
+df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFC4_GroFit_df.csv"
 plot_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
 # Uses parent directory of DataFile as working directory
@@ -46,8 +46,8 @@ setwd(DataLoc)
 
 # In order to do the merge Plate Info should contain a column called "Well.Row" and "Well.Col"
 # this will represent whatever is in the that row and column of the plate for example Row A Col 1 contain the yeast yHDO1
-PlateInfo = read.csv(PlateInfo, header = TRUE, check.names = FALSE)
-TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = FALSE)
+PlateInfo = read.csv(PlateInfo, header = TRUE, check.names = T)
+TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = T)
 
 
 ######## Pulls the beginning of the plate name out of the name ########
@@ -94,9 +94,10 @@ timePoints_list = list()
 for(i in 1:length(PlateNames)){
   timePoints_list[[i]] = list()
   timePoints = data.frame(get(PlateNames[[i]])[1,4:ncol(get(PlateNames[[i]]))])
-  timePoints = apply(timePoints,2,function(x) gsub('.* (\\d*) h (\\d*).*', '\\1.0\\2',x))
+  timePoints = apply(timePoints,2,function(x) gsub('\\.*(\\d*) h ?(\\d*).*', '\\1.0\\2',x))
   for(j in 1:length(timePoints)){
-    timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60}
+    timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
+  }
   timePoints_list[[i]]$timePoints = as.numeric(timePoints)
 }
 
@@ -119,15 +120,8 @@ for(i in 1:length(PlateNames)){
 ######## This also deletes the column called "Content"  this is the column that should include concentrations ########
 for(i in 1:length(PlateNames)){
   filename = PlateNames[[i]]
-  # print(paste("123: filename is ", filename, sep = ''))
-  # print(TreatmentInfo)
-
   Treat = TreatmentInfo[which(TreatmentInfo$Plate == filename),"Treatment"]
-  # print(paste("126: ", "Treat is: ", Treat, ', TreatmentInfo$Plate is: ', TreatmentInfo$Plate, ', filename is: ', filename, sep = ''))
-
   Treatment = rep(Treat, nrow(get(filename)))
-  # print(paste("129: Treatment is: ", Treatment, sep = ''))
-  # print(paste("130: filename is: ", filename, sep = ''))
   assign(filename, cbind(Treatment, get(filename)))
 }
 
@@ -161,24 +155,40 @@ for(i in 1:length(PlateNames)){
     GroFitResults[[i]][[j]]$Plate = PlateNames[[i]]
     GroFitResults[[i]][[j]]$Treatment = get(PlateNames[[i]])[j,"Treatment"] # MODIFY TO RELEVANT PLATE INFORMATION
     GroFitResults[[i]][[j]]$Strain = get(PlateNames[[i]])[j,"Strain"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Species = get(PlateNames[[i]])[j, "Media"] # MODIFY TO RELEVANT PLATE INFORMATION
+    GroFitResults[[i]][[j]]$Media = get(PlateNames[[i]])[j, "Media"] # MODIFY TO RELEVANT PLATE INFORMATION
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
     GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
-    GroFitResults[[i]][[j]]$GroFitResults =grofit(TimeData, GrowthData, control=grofit.control(suppress.messages = TRUE, fit.opt = "m", interactive = FALSE, model.type=c("logistic"), nboot.gc= 0, smooth.gc  = 5))
+    GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
+      control = grofit.control(
+        suppress.messages = TRUE,
+        fit.opt = "m",
+        interactive = FALSE,
+        model.type=c("logistic"),
+        nboot.gc= 0,
+        smooth.gc  = 5)
+        )
   }
   print(noquote(paste("  Finished with plate ", i, ".", sep = "")))
 }
 print(noquote("  Results complete!"))
 
 ######## Creates a data table of lag, growth rate, and saturation ########
-# Column names can be modified for relevant plate information - "Strain", "Species", "Treatment"
+# Column names can be modified for relevant plate information - "Strain", "Media", "Treatment"
 print(noquote("Generating data frame of growth parameters..."))
-GroFit_df = data.frame(Plate = character(), Treatment = character(), Strain = character(), Species = character(), Lag = numeric(), GrowthRate = numeric(), Saturation = numeric())
+GroFit_df = data.frame(
+  Plate = character(),
+  Treatment = character(),
+  Strain = character(),
+  Media = character(),
+  Lag = numeric(),
+  GrowthRate = numeric(),
+  Saturation = numeric()
+  )
 k = 1
 PLATE = 1
 TREATMENT = 2
 STRAIN = 3
-SPECIES = 4
+MEDIA = 4
 LAG = 5
 GROWTHRATE = 6
 SATURATION = 7
@@ -187,7 +197,7 @@ for(i in 1:length(GroFitResults)){
     GroFit_df[k,PLATE] = GroFitResults[[i]][[j]]$Plate
     GroFit_df[k,TREATMENT] = GroFitResults[[i]][[j]]$Treatment
     GroFit_df[k,STRAIN] = GroFitResults[[i]][[j]]$Strain
-    GroFit_df[k,SPECIES] = GroFitResults[[i]][[j]]$Species
+    GroFit_df[k,MEDIA] = GroFitResults[[i]][[j]]$Media
     GroFit_df[k,LAG] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
     GroFit_df[k,GROWTHRATE] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
     GroFit_df[k,SATURATION] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
@@ -195,15 +205,16 @@ for(i in 1:length(GroFitResults)){
   }
 }
 ######## Adds a column to include the replicate number for the experiment this should be changed for each replicate ########
-GroFit_df$Replicate = rep("Rep1", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
+GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
 
 # SET DIRECTORY to SAVE GroFit_df TO
 write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
 
 ######## Creates a growth curve ########
 # SET DIRECTORY TO SAVE PDF OUTPUT TO #
-pdf(paste(plot_dest, format(Sys.time(), "%Y%m%d-%H%M"), "_GrowthCurves.pdf", sep = ""))
+pdf(paste(plot_dest, format(Sys.time(), "%Y-%m-%d-%H%M"), "_GrowthCurves.pdf", sep = ""))
 print(noquote("Plotting curves..."))
+
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
     times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
@@ -232,40 +243,101 @@ for(i in 1:length(GroFitResults)){
 
 	# Saturation point - horizontal line with confidence intervals
     if(!is.null(Aobs) & !is.na(Aobs) & !is.nan(A.upCI) & !is.nan(A.loCI)){
-     curve = curve + geom_hline(yintercept = Aobs, color = "blue")
+      curve = curve +
+      geom_hline(
+        yintercept = Aobs,
+        color = "blue"
+        )
     }
     if(!is.nan(A.upCI) & !is.na(A.upCI)){
-      curve = curve + geom_hline(yintercept = A.upCI, col = "cyan", lty = 2)
+      curve = curve +
+      geom_hline(
+        yintercept = A.upCI,
+        col = "cyan",
+        lty = 2
+        )
     }
     if(!is.nan(A.loCI) & !is.na(A.loCI)){
-      curve = curve + geom_hline(yintercept = A.loCI, col = "cyan", lty = 2)
+      curve = curve +
+      geom_hline(
+        yintercept = A.loCI,
+        col = "cyan",
+        lty = 2
+        )
     }
 
 	# Lag time - vertical line with confidence intervals
     if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI)){
-     curve = curve + geom_vline(xintercept = lambdaobs, color = "green4")
+     curve = curve +
+     geom_vline(
+       xintercept = lambdaobs,
+       color = "green4"
+       )
     }
     if(!is.nan(lambda.upCI) & !is.na(lambda.upCI)){
-      curve = curve + geom_vline(xintercept = lambda.upCI, col = "green", lty = 2)
+      curve = curve +
+      geom_vline(
+        xintercept = lambda.upCI,
+        col = "green",
+        lty = 2
+        )
     }
     if(!is.nan(lambda.loCI) & !is.na(lambda.loCI)){
-      curve = curve + geom_vline(xintercept = lambda.loCI, col = "green", lty = 2)
+      curve = curve +
+      geom_vline(
+        xintercept = lambda.loCI,
+        col = "green",
+        lty = 2
+        )
     }
 
 	# Max growth rate - sloped line with confidence intervals
     if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI)){
-      curve = curve + geom_abline(intercept = -muobs*lambdaobs, slope = muobs, col = "red")
+      curve = curve +
+      geom_abline(
+        intercept = -(muobs*lambdaobs),
+        slope = muobs,
+        col = "red"
+        )
     }
     if(!is.nan(mu.upCI) & !is.na(mu.upCI)){
-      curve = curve + geom_abline(intercept = -muobs*lambdaobs, slope = mu.upCI, col = "orange", lty = 2)
+      curve = curve +
+      geom_abline(
+        intercept = -(muobs*lambdaobs),
+        slope = mu.upCI,
+        col = "orange",
+        lty = 2
+        )
     }
     if(!is.nan(mu.loCI) & !is.na(mu.loCI)){
-      curve = curve + geom_abline(intercept = -muobs*lambdaobs, slope = mu.loCI, col = "orange", lty = 2)
+      curve = curve +
+      geom_abline(
+        intercept = -(muobs*lambdaobs),
+        slope = mu.loCI,
+        col = "orange",
+        lty = 2
+        )
     }
 
     # Plot formatting - axes, max/min, gridlines, etc.
-    curve = curve + ylim(0,2)+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
-    curve = curve + xlab("Time")+ylab("Absorbance")+ggtitle(paste(GroFitResults[[i]][[j]]$Plate, GroFitResults[[i]][[j]]$Treatment,GroFitResults[[i]][[j]]$Strain, GroFitResults[[i]][[j]]$Species, sep = " "))
+    curve = curve +
+    ylim(0,2) +
+    scale_x_continuous(breaks = seq(0,150,10)) +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = "black")
+      )
+    curve = curve +
+    xlab("Time") +
+    ylab("Absorbance") +
+    ggtitle(paste(GroFitResults[[i]][[j]]$Plate,
+      GroFitResults[[i]][[j]]$Treatment,
+      GroFitResults[[i]][[j]]$Strain,
+      GroFitResults[[i]][[j]]$Media,
+      sep = " ")
+      )
     print(curve)
     # print(noquote(paste("  Plate ", i, ", well ", j, " plotted.", sep = "")))
 
