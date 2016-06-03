@@ -212,7 +212,7 @@ write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Dat
 
 ######## Creates a growth curve ########
 # SET DIRECTORY TO SAVE PDF OUTPUT TO #
-pdf(paste(plot_dest, format(Sys.time(), "%Y-%m-%d-%H%M"), "_GrowthCurves.pdf", sep = ""))
+pdf(paste(plot_dest, format(Sys.time(), "%Y-%m-%d-%H%M"), "_", noquote(unique(GroFit_df$Plate)),".pdf", sep = "", collapse = "+"))
 print(noquote("Plotting curves..."))
 
 for(i in 1:length(GroFitResults)){
