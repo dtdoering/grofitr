@@ -53,10 +53,8 @@ TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = T)
 ######## Pulls the beginning of the plate name out of the name ########
 # For example, the Experiment name pulled is "CGR" the data saved as CRG-E#-P#
 # ExperimentName = dir()[1]   # Dana's method, requires data to be only/first file in working directory
-ExperimentName = tail(strsplit(DataFile, "/")[[1]], n=1)
-ExperimentName = strsplit(ExperimentName, "[.]")[[1]][1] # Remove end file file name
-ExperimentName = strsplit(ExperimentName, "-")[[1]][1] # Get experiment number
 
+ExperimentName <- DataFile %>% strsplit("[/.-]") %>% unlist %>% tail(4) %>% head(1)
 
 ######## Creates the file names for the saved plate reader data ########
 # NOTE: the "Experiment Name" was already pulled earlier when looking in the file
