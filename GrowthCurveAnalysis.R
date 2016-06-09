@@ -151,9 +151,12 @@ for(i in 1:length(PlateNames)){
   for(j in 1:nrow(get(PlateNames[[i]]))){
     GroFitResults[[i]][[j]] = list()
     GroFitResults[[i]][[j]]$Plate = PlateNames[[i]]
-    GroFitResults[[i]][[j]]$Treatment = get(PlateNames[[i]])[j,"Treatment"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Strain = get(PlateNames[[i]])[j,"Strain"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Media = get(PlateNames[[i]])[j, "Media"] # MODIFY TO RELEVANT PLATE INFORMATION
+
+    # Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(PlateNames[[i]])[j,1]
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(PlateNames[[i]])[j,2]
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(PlateNames[[i]])[j,3]
+
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
     GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
@@ -161,8 +164,8 @@ for(i in 1:length(PlateNames)){
         suppress.messages = TRUE,
         fit.opt = "m",
         interactive = FALSE,
-        model.type=c("logistic"),
-        nboot.gc= 0,
+        model.type = c("logistic"),
+        nboot.gc = 0,
         smooth.gc  = 5)
         )
   }
@@ -182,23 +185,17 @@ GroFit_df = data.frame(
   GrowthRate = numeric(),
   Saturation = numeric()
   )
+
 k = 1
-PLATE = 1
-TREATMENT = 2
-STRAIN = 3
-MEDIA = 4
-LAG = 5
-GROWTHRATE = 6
-SATURATION = 7
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
-    GroFit_df[k,PLATE] = GroFitResults[[i]][[j]]$Plate
-    GroFit_df[k,TREATMENT] = GroFitResults[[i]][[j]]$Treatment
-    GroFit_df[k,STRAIN] = GroFitResults[[i]][[j]]$Strain
-    GroFit_df[k,MEDIA] = GroFitResults[[i]][[j]]$Media
-    GroFit_df[k,LAG] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
-    GroFit_df[k,GROWTHRATE] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
-    GroFit_df[k,SATURATION] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
+    GroFit_df[k,1] = GroFitResults[[i]][[j]]$Plate
+    GroFit_df[k,2] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
+    GroFit_df[k,3] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
+    GroFit_df[k,4] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]]
+    GroFit_df[k,5] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
+    GroFit_df[k,6] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
+    GroFit_df[k,7] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
     k = 1 + k
   }
 }
@@ -331,9 +328,9 @@ for(i in 1:length(GroFitResults)){
     xlab("Time") +
     ylab("Absorbance") +
     ggtitle(paste(GroFitResults[[i]][[j]]$Plate,
-      GroFitResults[[i]][[j]]$Treatment,
-      GroFitResults[[i]][[j]]$Strain,
-      GroFitResults[[i]][[j]]$Media,
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]],
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]],
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]],
       sep = " ")
       )
     print(curve)
