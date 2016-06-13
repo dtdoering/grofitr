@@ -21,17 +21,21 @@ library("doBy")
 library("RColorBrewer")
 library("ggplot2")
 library("gdata")
+library("magrittr")
+library("dplyr")
 
 ### INPUTS: Enter the proper locations and files for analysis ###
 
-DataFile = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/2016-01-21-StackerData/MFC4_trimmed-E2-P1.csv"
-PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/PlateInfo/2016-01-28-GroFitPlateInfo_MFC4.csv"
-TreatmentInfo =           "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20160128_MFC4-E2_TreatmentInfo.csv"
+DataFile = "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7ED-E2-P1.csv"
+PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7ED.csv"
+# TreatmentInfo =           "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20160128_MFC4-E2_TreatmentInfo.csv"
+
+truncTime = 50 # hours
 
 ExperimentNumber = 2 # ADD THE REPLICATE NUMBER HERE
 NumberOfPlates= 1 # ADD NUMBER OF PLATES HERE
 
-df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFC4_GroFit_df.csv"
+df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7ED_GroFit_df.csv"
 plot_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
 # Uses parent directory of DataFile as working directory
@@ -46,16 +50,17 @@ setwd(DataLoc)
 
 # In order to do the merge Plate Info should contain a column called "Well.Row" and "Well.Col"
 # this will represent whatever is in the that row and column of the plate for example Row A Col 1 contain the yeast yHDO1
+ExperimentName <- DataFile %>% strsplit("[/.-]") %>% unlist %>% tail(4) %>% head(1)
+
 PlateInfo = read.csv(PlateInfo, header = TRUE, check.names = T)
-TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = T)
+# TreatmentInfo = data.frame(Plate = paste(ExperimentName, "", sep = ""), Treatment = "LICM")
+# TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = T)
 
 
 ######## Pulls the beginning of the plate name out of the name ########
 # For example, the Experiment name pulled is "CGR" the data saved as CRG-E#-P#
 # ExperimentName = dir()[1]   # Dana's method, requires data to be only/first file in working directory
-ExperimentName = tail(strsplit(DataFile, "/")[[1]], n=1)
-ExperimentName = strsplit(ExperimentName, "[.]")[[1]][1] # Remove end file file name
-ExperimentName = strsplit(ExperimentName, "-")[[1]][1] # Get experiment number
+
 
 
 ######## Creates the file names for the saved plate reader data ########
@@ -74,8 +79,8 @@ ExperimentPlates=unlist(Experiment_list)
 
 ######## Loads in plate data based on the names created above ########
 for(i in 1:length(ExperimentPlates)){
-  filename = paste(ExperimentName, i, sep = "") # Creates an object name for each plate
-  assign(filename, read.csv(ExperimentPlates[i], skip = 5, header = TRUE, check.names = T, row.names = NULL)) # Reads in files from the directory based on the file names created above
+  filename = paste(ExperimentName)#, i, sep = "") # Creates an object name for each plate
+  assign(filename, read.csv(ExperimentPlates[i], skip = 6, header = TRUE, check.names = T, row.names = NULL)) # Reads in files from the directory based on the file names created above
 
 }
 
@@ -84,7 +89,7 @@ for(i in 1:length(ExperimentPlates)){
 PlateName_list = list()
 for(i in 1:NumberOfPlates){
   PlateName_list[[i]] = list()
-  PlateName_list[[i]] = paste(ExperimentName, i, sep = "")
+  PlateName_list[[i]] = paste(ExperimentName)#, i, sep = "")
 }
 PlateNames = unlist(PlateName_list)
 
@@ -98,7 +103,7 @@ for(i in 1:length(PlateNames)){
   for(j in 1:length(timePoints)){
     timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
   }
-  timePoints_list[[i]]$timePoints = as.numeric(timePoints)
+  timePoints_list[[i]]$timePoints = as.numeric(timePoints[as.numeric(timePoints) <= truncTime & is.na(timePoints) == F])
 }
 
 ######## Removes the time-point row in the data table
@@ -111,22 +116,24 @@ for(i in 1:length(PlateNames)){
 ######## This also drops the well and column information in the original data table ########
 for(i in 1:length(PlateNames)){
   filename = PlateNames[[i]]
-  assign(filename, merge(PlateInfo,get(filename), by = c("Well.Row", "Well.Col")))
+  assign(filename, merge(PlateInfo[ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],get(filename), by = c("Well.Row", "Well.Col")))
 }
 
 ######## Adds a column of additional information based on Plate number from TreatmentInfo ########
 # For example, TreatmentInfo contains carbon source used for each plate
 # If you are using different concentrations of a treatment this should contain that information
 ######## This also deletes the column called "Content"  this is the column that should include concentrations ########
-for(i in 1:length(PlateNames)){
-  filename = PlateNames[[i]]
-  Treat = TreatmentInfo[which(TreatmentInfo$Plate == filename),"Treatment"]
-  Treatment = rep(Treat, nrow(get(filename)))
-  assign(filename, cbind(Treatment, get(filename)))
-}
+# for(i in 1:length(PlateNames)){
+#   filename = PlateNames[[i]]
+#   Treat = TreatmentInfo[which(TreatmentInfo$Plate == filename),"Treatment"]
+#   Treatment = rep(Treat, nrow(get(filename)))
+#   assign(filename, cbind(Treatment, get(filename)))
+# }
 
 ######## Drops columns no longer needed ########
-DropColumns = c("Well.Row", "Well.Col", "Content")
+DropColumns = c("Well.Row",
+                "Well.Col",
+                "Content")
 for(i in 1:length(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, get(filename)[,-which(colnames(get(filename)) %in% DropColumns)])
@@ -136,7 +143,7 @@ for(i in 1:length(PlateNames)){
 timeMatrix_list = list()
 for(i in 1:length(timePoints_list)){
   timeMatrix_list[[i]] = list()
-  TIMES=rbind(timePoints_list[[i]]$timePoints)
+  TIMES = rbind(timePoints_list[[i]]$timePoints)
   timePoints_m = data.frame(TIMES)
   for(j in 2:nrow(get(PlateNames[[i]]))){
     timePoints_m[j,] = timePoints_m
@@ -153,18 +160,25 @@ for(i in 1:length(PlateNames)){
   for(j in 1:nrow(get(PlateNames[[i]]))){
     GroFitResults[[i]][[j]] = list()
     GroFitResults[[i]][[j]]$Plate = PlateNames[[i]]
-    GroFitResults[[i]][[j]]$Treatment = get(PlateNames[[i]])[j,"Treatment"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Strain = get(PlateNames[[i]])[j,"Strain"] # MODIFY TO RELEVANT PLATE INFORMATION
-    GroFitResults[[i]][[j]]$Media = get(PlateNames[[i]])[j, "Media"] # MODIFY TO RELEVANT PLATE INFORMATION
+
+    # Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(PlateNames[[i]])[j,1]
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(PlateNames[[i]])[j,2]
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(PlateNames[[i]])[j,3]
+
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
+    TimeData = TimeData[, 1:ncol(TimeData), drop = F]
+
     GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
+    GrowthData = GrowthData[, 1:(ncol(TimeData)+3), drop = F]
+
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
       control = grofit.control(
         suppress.messages = TRUE,
         fit.opt = "m",
         interactive = FALSE,
-        model.type=c("logistic"),
-        nboot.gc= 0,
+        model.type = c("logistic"),
+        nboot.gc = 0,
         smooth.gc  = 5)
         )
   }
@@ -184,23 +198,17 @@ GroFit_df = data.frame(
   GrowthRate = numeric(),
   Saturation = numeric()
   )
+
 k = 1
-PLATE = 1
-TREATMENT = 2
-STRAIN = 3
-MEDIA = 4
-LAG = 5
-GROWTHRATE = 6
-SATURATION = 7
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
-    GroFit_df[k,PLATE] = GroFitResults[[i]][[j]]$Plate
-    GroFit_df[k,TREATMENT] = GroFitResults[[i]][[j]]$Treatment
-    GroFit_df[k,STRAIN] = GroFitResults[[i]][[j]]$Strain
-    GroFit_df[k,MEDIA] = GroFitResults[[i]][[j]]$Media
-    GroFit_df[k,LAG] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
-    GroFit_df[k,GROWTHRATE] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
-    GroFit_df[k,SATURATION] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
+    GroFit_df[k,1] = GroFitResults[[i]][[j]]$Plate
+    GroFit_df[k,2] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
+    GroFit_df[k,3] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
+    GroFit_df[k,4] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]]
+    GroFit_df[k,5] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
+    GroFit_df[k,6] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
+    GroFit_df[k,7] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
     k = 1 + k
   }
 }
@@ -332,11 +340,14 @@ for(i in 1:length(GroFitResults)){
     curve = curve +
     xlab("Time") +
     ylab("Absorbance") +
-    ggtitle(paste(GroFitResults[[i]][[j]]$Plate,
-      GroFitResults[[i]][[j]]$Treatment,
-      GroFitResults[[i]][[j]]$Strain,
-      GroFitResults[[i]][[j]]$Media,
-      sep = " ")
+    ggtitle(paste(GroFitResults[[i]][[j]]$Plate, ": ",
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]],
+      " LICM(",
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]],
+      ",",
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]],
+      ")",
+      sep = "")
       )
     print(curve)
     # print(noquote(paste("  Plate ", i, ", well ", j, " plotted.", sep = "")))
