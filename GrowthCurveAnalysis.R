@@ -158,7 +158,11 @@ for(i in 1:length(PlateNames)){
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(PlateNames[[i]])[j,3]
 
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
+    TimeData = TimeData[, 1:ncol(TimeData), drop = F]
+
     GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
+    GrowthData = GrowthData[, 1:(ncol(TimeData)+3), drop = F]
+    
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
       control = grofit.control(
         suppress.messages = TRUE,
