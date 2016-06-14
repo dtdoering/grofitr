@@ -79,8 +79,8 @@ ExperimentPlates=unlist(Experiment_list)
 
 ######## Loads in plate data based on the names created above ########
 for(i in 1:length(ExperimentPlates)){
-  filename = paste(ExperimentName)#, i, sep = "") # Creates an object name for each plate
-  assign(filename, read.csv(ExperimentPlates[i], skip = 6, header = TRUE, check.names = T, row.names = NULL)) # Reads in files from the directory based on the file names created above
+  filename = paste(ExperimentName) # Creates an object name for each plate
+  assign(filename, read.csv(ExperimentPlates[i], skip = (which(grepl("Raw", readLines(DataFile)))[1]-1), header = TRUE, check.names = T, row.names = NULL)) # Reads in files from the directory based on the file names created above
 
 }
 
@@ -183,7 +183,7 @@ for(i in 1:length(PlateNames)){
         )
   }
   assign(paste(PlateNames[[i]], "_GroFit_df", sep = ""), GroFit_df)
-  print(noquote(paste("  Finished with plate ", i, ".", sep = "")))
+  print(noquote(paste("  Finished with plate ", filename, ".", sep = "")))
 }
 print(noquote("  Results complete!"))
 
@@ -342,7 +342,7 @@ for(i in 1:length(GroFitResults)){
       axis.line = element_line(colour = "black")
       )
     curve = curve +
-    xlab("Time") +
+    xlab("Time (h)") +
     ylab("Absorbance") +
 
     ggtitle(paste(GroFitResults[[i]][[j]]$Plate, ": ",
@@ -360,7 +360,7 @@ for(i in 1:length(GroFitResults)){
   #------------Operations on Well-by-well basis must be done above here----------#
   }
 
-  print(noquote(paste("Plate ", i, " finished.", sep = "")))
+  print(noquote(paste("Plate ", filename, " finished.", sep = "")))
 
   #------------Operations on plate-by-plate basis must be done above here--------#
 }
