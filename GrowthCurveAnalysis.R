@@ -182,8 +182,10 @@ for(i in 1:length(PlateNames)){
         smooth.gc  = 5)
         )
   }
+  assign(paste(PlateNames[[i]], "_GroFit_df", sep = ""), GroFit_df)
   print(noquote(paste("  Finished with plate ", i, ".", sep = "")))
 }
+
 print(noquote("  Results complete!"))
 
 ######## Creates a data table of lag, growth rate, and saturation ########
@@ -191,14 +193,16 @@ print(noquote("  Results complete!"))
 print(noquote("Generating data frame of growth parameters..."))
 GroFit_df = data.frame(
   Plate = character(),
-  Treatment = character(),
-  Strain = character(),
-  Media = character(),
+  A = character(),
+  B = character(),
+  C = character(),
   Lag = numeric(),
   GrowthRate = numeric(),
   Saturation = numeric()
   )
-
+colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1],
+                              colnames(get(PlateNames[[1]]))[2],
+                              colnames(get(PlateNames[[1]]))[3])
 k = 1
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
@@ -212,8 +216,9 @@ for(i in 1:length(GroFitResults)){
     k = 1 + k
   }
 }
+
 ######## Adds a column to include the replicate number for the experiment this should be changed for each replicate ########
-GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
+# GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
 
 # SET DIRECTORY to SAVE GroFit_df TO
 write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
