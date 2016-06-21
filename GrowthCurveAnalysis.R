@@ -153,6 +153,18 @@ for(i in 1:length(timePoints_list)){
 
 ######## Runs GroFit for all plates ########
 # All Names following a dollar sign or in quotes can be modified (see specific lines)
+
+print(noquote("Generating data frame of growth parameters..."))
+GroFit_df = data.frame(
+  Plate = character(),
+  A = character(),
+  B = character(),
+  C = character(),
+  Lag = numeric(),
+  GrowthRate = numeric(),
+  Saturation = numeric()
+  )
+
 GroFitResults = list()
 print(noquote("Generating GroFit results..."))
 for(i in 1:length(PlateNames)){
@@ -189,16 +201,8 @@ print(noquote("  Results complete!"))
 
 ######## Creates a data table of lag, growth rate, and saturation ########
 # Column names can be modified for relevant plate information - "Strain", "Media", "Treatment"
-print(noquote("Generating data frame of growth parameters..."))
-GroFit_df = data.frame(
-  Plate = character(),
-  A = character(),
-  B = character(),
-  C = character(),
-  Lag = numeric(),
-  GrowthRate = numeric(),
-  Saturation = numeric()
-  )
+
+# [Moved upwards]
 
 colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1],
                               colnames(get(PlateNames[[1]]))[2],
@@ -279,14 +283,14 @@ for(i in 1:length(GroFitResults)){
     }
 
 	# Lag time - vertical line with confidence intervals
-    if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI)){
+    if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
      curve = curve +
      geom_vline(
        xintercept = lambdaobs,
        color = "green4"
        )
     }
-    if(!is.nan(lambda.upCI) & !is.na(lambda.upCI)){
+    if(!is.nan(lambda.upCI) & !is.na(lambda.upCI) & 0 < lambda.upCI & lambda.upCI < truncTime){
       curve = curve +
       geom_vline(
         xintercept = lambda.upCI,
@@ -294,7 +298,7 @@ for(i in 1:length(GroFitResults)){
         lty = 2
         )
     }
-    if(!is.nan(lambda.loCI) & !is.na(lambda.loCI)){
+    if(!is.nan(lambda.loCI) & !is.na(lambda.loCI) & 0 < lambda.loCI & lambda.loCI < truncTime){
       curve = curve +
       geom_vline(
         xintercept = lambda.loCI,
@@ -304,7 +308,7 @@ for(i in 1:length(GroFitResults)){
     }
 
 	# Max growth rate - sloped line with confidence intervals
-    if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI)){
+    if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
       curve = curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -321,7 +325,7 @@ for(i in 1:length(GroFitResults)){
         lty = 2
         )
     }
-    if(!is.nan(mu.loCI) & !is.na(mu.loCI)){
+    if(!is.nan(mu.loCI) & !is.na(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
       curve = curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -333,13 +337,14 @@ for(i in 1:length(GroFitResults)){
 
     # Plot formatting - axes, max/min, gridlines, etc.
     curve = curve +
-    ylim(0,2) +
+    ylim(0, 2) +
     scale_x_continuous(breaks = seq(0,150,10)) +
     theme(
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       panel.background = element_blank(),
-      axis.line = element_line(colour = "black")
+      axis.line.x = element_line(colour = "black"),
+      axis.line.y = element_line(color = "black")
       )
     curve = curve +
     xlab("Time (h)") +
