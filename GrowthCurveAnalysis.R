@@ -1,18 +1,12 @@
-###################################### NOTES ######################################
-#                                                                                 #
-# This script is designed to run with data saved in the following format:         #
-#    - Saved as CSV                                                               #
-#    - The filename in the format of ExperimentalID-ReplicateNumber-PlateNumber   #
-#      for example:                                                               #
-#                 CGR-E1-P1                                                       #
-#                                                                                 #
-#               - CGR represents the experimental identifier - Carbon Growth Rate #
-#               - E1 represents the replicate of the experiment - replicate 1     #
-#               - P1 represents the plate number - plate 1                        #
-# This should be run on a single replicate at a time, replicates will be combined #
-# after the fact.                                                                 #
-#                                                                                 #
-###################################################################################
+usage <- paste("This script is designed to run with data saved in the following format:
+   - Saved as CSV
+   - The filename in the format of ExperimentalID-ReplicateNumber-PlateNumber
+     for example:
+                CGR-E1-P1
+              - CGR represents the experimental identifier: Carbon Growth Rate
+              - E1 represents the replicate of the experiment - replicate 1
+              - P1 represents the plate number - plate 1
+This should be run on a single replicate at a time, replicates will be combined after the fact.")
 
 options(stringsAsFactors = FALSE)
 
@@ -39,7 +33,18 @@ df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7ED_GroFit_
 plot_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
 # Uses parent directory of DataFile as working directory
-DataLoc = paste(paste(head(unlist(strsplit(DataFile, "/")), n = length(unlist(strsplit(DataFile, "/"))) - 1), sep = '/', collapse = '/'), "/", sep = '')
+
+DataLoc = DataFile %>%
+  strsplit("/") %>%
+  unlist %>%
+  head(n = DataFile %>%
+           strsplit("/") %>%
+           unlist %>%
+           length - 1
+  ) %>%
+  paste(sep = "/", collapse = "/") %>%
+  paste("/", sep = "")
+
 setwd(DataLoc)
 
 ######## Load Additional Experimental data ########
@@ -80,7 +85,16 @@ ExperimentPlates=unlist(Experiment_list)
 ######## Loads in plate data based on the names created above ########
 for(i in 1:length(ExperimentPlates)){
   filename = paste(ExperimentName) # Creates an object name for each plate
-  assign(filename, read.csv(ExperimentPlates[i], skip = (which(grepl("Raw", readLines(DataFile)))[1]-1), header = TRUE, check.names = T, row.names = NULL)) # Reads in files from the directory based on the file names created above
+  assign(filename,
+         read.csv(ExperimentPlates[i],
+                  skip = which(
+                    grepl("Raw", readLines(DataFile))
+                  )[1]-1,
+                  header = TRUE,
+                  check.names = T,
+                  row.names = NULL
+         )
+  ) # Reads in files from the directory based on the file names created above
 
 }
 
