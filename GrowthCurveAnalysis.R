@@ -185,7 +185,6 @@ for(i in 1:length(PlateNames)){
         smooth.gc  = 5)
         )
   }
-  assign(paste(PlateNames[[i]], "_GroFit_df", sep = ""), GroFit_df)
   print(noquote(paste("  Finished with plate ", filename, ".", sep = "")))
 }
 print(noquote("  Results complete!"))
@@ -208,6 +207,7 @@ for(i in 1:length(GroFitResults)){
     GroFit_df[k,7] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
     k = 1 + k
   }
+  assign(paste(PlateNames[[i]], "_GroFit_df", sep = ""), GroFit_df)
 }
 # # Add a column to include the replicate number for the experiment this should be changed for each replicate
 # GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
