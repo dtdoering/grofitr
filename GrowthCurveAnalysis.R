@@ -18,37 +18,27 @@ library("gdata")
 library("magrittr")
 library("dplyr")
 
-### INPUTS: Enter the proper locations and files for analysis ###
-
-DataFile = "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7ED-E2-P1.csv"
-PlateInfo = "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7ED.csv"
-# TreatmentInfo =           "~/1_Research/Lab/DATA/Plate_Reader/TreatmentInfo/20160128_MFC4-E2_TreatmentInfo.csv"
+# INPUTS: Enter the proper locations and files for analysis ===================
+DataFile =
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7ED-E2-P1.csv"
+PlateInfo =
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7ED.csv"
 
 truncTime = 50 # hours
 
-ExperimentNumber = 2 # ADD THE REPLICATE NUMBER HERE
-NumberOfPlates= 1 # ADD NUMBER OF PLATES HERE
+ExperimentNumber = 2 # Add replicate number here
+NumberOfPlates= 1 # Add number of plates here
 
-df_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7ED_GroFit_df.csv"
-plot_dest = "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
+# Set output destination of GroFit_df and PDF plot file
+df_dest =
+  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7ED_GroFit_df.csv"
+plot_dest =
+  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
-# Uses parent directory of DataFile as working directory
-
-DataLoc = DataFile %>%
-  strsplit("/") %>%
-  unlist %>%
-  head(n = DataFile %>%
-           strsplit("/") %>%
-           unlist %>%
-           length - 1
-  ) %>%
-  paste(sep = "/", collapse = "/") %>%
-  paste("/", sep = "")
-
+DataLoc = dirname(DataFile)
 setwd(DataLoc)
 
-######## Load Additional Experimental data ########
-######## NOTE: This data should be stored in a separate directory from the plate reader data
+# Load Additional Experimental data ===========================================
 
 # This is the data that should be included in the first three columns of the data tables for grofit
 # Here: PlateInfo contains the species and lab identifier that is in each well and TreatmentInfo includes the carbon sources in each plate
@@ -383,6 +373,11 @@ for(i in 1:length(GroFitResults)){
 
   #------------Operations on plate-by-plate basis must be done above here--------#
 }
+
+# Cleanup - remove intermediate variables that aren't part of final output
+# rmlist <- keep(GroFit_df, GroFitResults, list = c(grep("_GroFit_df", ls(), value = T), PlateNames))
+# rm(rmlist, list = rmlist)
+
 dev.off()
 
 print(noquote("GroFit script complete."))
