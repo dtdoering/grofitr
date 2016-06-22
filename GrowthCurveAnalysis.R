@@ -52,13 +52,10 @@ PlateInfo = read.csv(PlateInfo, header = TRUE, check.names = T)
 # TreatmentInfo = read.csv(TreatmentInfo, header = TRUE, check.names = T)
 
 
-######## Pulls the beginning of the plate name out of the name ########
-# For example, the Experiment name pulled is "CGR" the data saved as CRG-E#-P#
-# ExperimentName = dir()[1]   # Dana's method, requires data to be only/first file in working directory
-
+# Pulls the beginning of the plate name out of the name
 ExperimentName <- DataFile %>% strsplit("[/.-]") %>% unlist %>% tail(4) %>% head(1)
 
-######## Creates the file names for the saved plate reader data ########
+# Creates the file names for the saved plate reader data
 # NOTE: the "Experiment Name" was already pulled earlier when looking in the file
 # Here you can change the other parts of the saved name if you do not use "E" to denote replicate number or "P" to represent plate number
 Experiment_list = list()
@@ -72,7 +69,7 @@ for(i in 1:1){
 
 ExperimentPlates=unlist(Experiment_list)
 
-######## Loads in plate data based on the names created above ########
+# Load in plate data based on the names created above
 for(i in 1:length(ExperimentPlates)){
   filename = paste(ExperimentName) # Creates an object name for each plate
   assign(filename,
@@ -88,7 +85,7 @@ for(i in 1:length(ExperimentPlates)){
 
 }
 
-######## Creates a list of object names assigned above ########
+# Create a list of object names assigned above
 # This name will consist of the experiment name name plus a number to represent each plate
 PlateName_list = list()
 for(i in 1:NumberOfPlates){
@@ -97,7 +94,7 @@ for(i in 1:NumberOfPlates){
 }
 PlateNames = unlist(PlateName_list)
 
-########  Creates a list of time points used in each experiment ########
+# Creates a list of time points used in each experiment
 # This list is based on the the numeric values not the long names (e.g. 1hr - 2hr)
 timePoints_list = list()
 for(i in 1:length(PlateNames)){
@@ -110,31 +107,22 @@ for(i in 1:length(PlateNames)){
   timePoints_list[[i]]$timePoints = as.numeric(timePoints[as.numeric(timePoints) <= truncTime & is.na(timePoints) == F])
 }
 
-######## Removes the time-point row in the data table
+# Remove the time-point row in the data table
 for(i in 1:length(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, get(filename)[-1,])
 }
 
-######## Merges the information stored in Plate info with the data tables based on well and column information ########
-######## This also drops the well and column information in the original data table ########
+# Merge the information stored in Plate info with the data tables based on well
+# and column information. This also drops the well and column information in
+# the original data table.
+
 for(i in 1:length(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, merge(PlateInfo[ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],get(filename), by = c("Well.Row", "Well.Col")))
 }
 
-######## Adds a column of additional information based on Plate number from TreatmentInfo ########
-# For example, TreatmentInfo contains carbon source used for each plate
-# If you are using different concentrations of a treatment this should contain that information
-######## This also deletes the column called "Content"  this is the column that should include concentrations ########
-# for(i in 1:length(PlateNames)){
-#   filename = PlateNames[[i]]
-#   Treat = TreatmentInfo[which(TreatmentInfo$Plate == filename),"Treatment"]
-#   Treatment = rep(Treat, nrow(get(filename)))
-#   assign(filename, cbind(Treatment, get(filename)))
-# }
-
-######## Drops columns no longer needed ########
+# Drop columns no longer needed
 DropColumns = c("Well.Row",
                 "Well.Col",
                 "Content")
@@ -143,7 +131,7 @@ for(i in 1:length(PlateNames)){
   assign(filename, get(filename)[,-which(colnames(get(filename)) %in% DropColumns)])
 }
 
-########  Creates a time matrix for each plate ########
+# Creates a time matrix for each plate
 timeMatrix_list = list()
 for(i in 1:length(timePoints_list)){
   timeMatrix_list[[i]] = list()
@@ -155,8 +143,7 @@ for(i in 1:length(timePoints_list)){
   timeMatrix_list[[i]] = as.matrix(timePoints_m)
 }
 
-######## Runs GroFit for all plates ########
-# All Names following a dollar sign or in quotes can be modified (see specific lines)
+# Runs GroFit for all plates ==================================================
 
 print(noquote("Generating data frame of growth parameters..."))
 GroFit_df = data.frame(
@@ -203,14 +190,12 @@ for(i in 1:length(PlateNames)){
 }
 print(noquote("  Results complete!"))
 
-######## Creates a data table of lag, growth rate, and saturation ########
-# Column names can be modified for relevant plate information - "Strain", "Media", "Treatment"
-
+# Creates a data table of lag, growth rate, and saturation ====================
 # [Moved upwards]
 
-colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1],
-                              colnames(get(PlateNames[[1]]))[2],
-                              colnames(get(PlateNames[[1]]))[3])
+colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1], # "Homolog"
+                              colnames(get(PlateNames[[1]]))[2], # "feConc"
+                              colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 k = 1
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
@@ -224,17 +209,31 @@ for(i in 1:length(GroFitResults)){
     k = 1 + k
   }
 }
-######## Adds a column to include the replicate number for the experiment this should be changed for each replicate ########
+# # Add a column to include the replicate number for the experiment this should be changed for each replicate
 # GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df)) ### CHANGE THE NAME FOR REPLICATE NUMBER
 
 # SET DIRECTORY to SAVE GroFit_df TO
 write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
 
-######## Creates a growth curve ########
+# Creates a growth curve ======================================================
 # SET DIRECTORY TO SAVE PDF OUTPUT TO #
-pdf(paste(plot_dest, format(Sys.time(), "%Y-%m-%d-%H%M"), "_", noquote(unique(GroFit_df$Plate)),".pdf", sep = "", collapse = "+"))
-print(noquote("Plotting curves..."))
+pdf(
+  paste(plot_dest,
+        format(
+          Sys.time(),
+          "%Y-%m-%d-%H%M"
+        ),
+        "_",
+        noquote(
+          unique(GroFit_df$Plate)
+        ),
+        ".pdf",
+        sep = "",
+        collapse = "+"
+  )
+)
 
+print(noquote("Plotting curves..."))
 for(i in 1:length(GroFitResults)){
   for(j in 1:length(GroFitResults[[i]])){
     times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
@@ -364,17 +363,16 @@ for(i in 1:length(GroFitResults)){
       sep = "")
       )
     print(curve)
-    # print(noquote(paste("  Plate ", i, ", well ", j, " plotted.", sep = "")))
 
-  #------------Operations on Well-by-well basis must be done above here----------#
+  # Operations on Well-by-well basis must be done above here-------------------
   }
 
   print(noquote(paste("Plate ", filename, " finished.", sep = "")))
 
-  #------------Operations on plate-by-plate basis must be done above here--------#
+  # Operations on plate-by-plate basis must be done above here-----------------
 }
 
-# Cleanup - remove intermediate variables that aren't part of final output
+# # Cleanup - remove intermediate variables that aren't part of final output
 # rmlist <- keep(GroFit_df, GroFitResults, list = c(grep("_GroFit_df", ls(), value = T), PlateNames))
 # rm(rmlist, list = rmlist)
 
