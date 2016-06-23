@@ -20,18 +20,18 @@ library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7EM-E2-P1.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/MFBL-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7EM.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/2016-01-07-PlateInfo_MFBL.csv"
 
-truncTime = 50 # hours
+truncTime = 40 # hours
 
 ExperimentNumber = 2 # Add replicate number here
 NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF of plots
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7EM_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFBL_GroFit_df.csv"
 plot_dest =
   "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
@@ -57,12 +57,13 @@ for(i in 1:1){
 ExperimentPlates=unlist(Experiment_list)
 
 # Load in plate data using file names in Experiment_list
-for(i in 1:length(ExperimentPlates)){
+for(i in seq_along(ExperimentPlates)){
   filename = paste(ExperimentName) # Creates an object name for each plate
   assign(filename,
          read.csv(ExperimentPlates[i],
                   skip = which(
-                    grepl("Raw", readLines(DataFile))
+                    grepl("Raw", readLines(DataFile)) |
+                    grepl("M\\d+", readLines(DataFile))
                   )[1]-1,
                   header = TRUE,
                   check.names = T,
@@ -83,11 +84,11 @@ PlateNames = unlist(PlateName_list)
 # Creates a list of time points used in each experiment
 # This list is based on the the numeric values not the long names (e.g. 1hr - 2hr)
 timePoints_list = list()
-for(i in 1:length(PlateNames)){
+for(i in seq_along(PlateNames)){
   timePoints_list[[i]] = list()
   timePoints = data.frame(get(PlateNames[[i]])[1,4:ncol(get(PlateNames[[i]]))])
   timePoints = apply(timePoints,2,function(x) gsub('\\.*(\\d*) h ?(\\d*).*', '\\1.0\\2',x))
-  for(j in 1:length(timePoints)){
+  for(j in seq_along(timePoints)){
     timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
   }
   timePoints_list[[i]]$timePoints = as.numeric(timePoints[as.numeric(timePoints) <= truncTime & is.na(timePoints) == F])
@@ -95,7 +96,7 @@ for(i in 1:length(PlateNames)){
 
 # Create a time matrix for each plate
 timeMatrix_list = list()
-for(i in 1:length(timePoints_list)){
+for(i in seq_along(timePoints_list)){
   timeMatrix_list[[i]] = list()
   TIMES = rbind(timePoints_list[[i]]$timePoints)
   timePoints_m = data.frame(TIMES)
@@ -107,13 +108,13 @@ for(i in 1:length(timePoints_list)){
 
 # Modify the input raw data ===================================================
 # Remove the timepoint row in the data table
-for(i in 1:length(PlateNames)){
+for(i in seq_along(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, get(filename)[-1,])
 }
 
 # Merge PlateInfo with growth data based on well
-for(i in 1:length(PlateNames)){
+for(i in seq_along(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, merge(PlateInfo[ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],get(filename), by = c("Well.Row", "Well.Col")))
 }
@@ -122,7 +123,7 @@ for(i in 1:length(PlateNames)){
 DropColumns = c("Well.Row",
                 "Well.Col",
                 "Content")
-for(i in 1:length(PlateNames)){
+for(i in seq_along(PlateNames)){
   filename = PlateNames[[i]]
   assign(filename, get(filename)[,-which(colnames(get(filename)) %in% DropColumns)])
 }
@@ -130,7 +131,7 @@ for(i in 1:length(PlateNames)){
 # Run GroFit for all plates ==================================================
 GroFitResults = list()
 print(noquote("Running GroFit on all plates..."))
-for(i in 1:length(PlateNames)){
+for(i in seq_along(PlateNames)){
   GroFitResults[[i]] = list()
   for(j in 1:nrow(get(PlateNames[[i]]))){
     GroFitResults[[i]][[j]] = list()
@@ -177,8 +178,8 @@ colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1], # "Homolog"
                               colnames(get(PlateNames[[1]]))[2], # "feConc"
                               colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 k = 1
-for(i in 1:length(GroFitResults)){
-  for(j in 1:length(GroFitResults[[i]])){
+for(i in seq_along(GroFitResults)){
+  for(j in seq_along(GroFitResults[[i]])){
     GroFit_df[k,1] = GroFitResults[[i]][[j]]$Plate
     GroFit_df[k,2] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
     GroFit_df[k,3] = GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
@@ -214,8 +215,8 @@ pdf(
 )
 
 print(noquote("Plotting curves..."))
-for(i in 1:length(GroFitResults)){
-  for(j in 1:length(GroFitResults[[i]])){
+for(i in seq_along(GroFitResults)){
+  for(j in seq_along(GroFitResults[[i]])){
     times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
     od = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.data
     temp_df = data.frame(cbind(times, od))
