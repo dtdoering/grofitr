@@ -349,9 +349,9 @@ for(i in 1:length(GroFitResults)){
   print(noquote(paste("Plate ", filename, " finished.", sep = "")))
 }
 
-# # Cleanup - remove intermediate variables that aren't part of final output ==
-# rmlist <- keep(list = grep("_GroFit_df", ls(), value = T))
-# rm(rmlist, list = rmlist)
+# Cleanup - remove intermediate variables that aren't part of final output ==
+rmlist <- keep(list = grep("_GroFit_df", ls(), value = T))
+rm(rmlist, list = rmlist)
 
 dev.off()
 
