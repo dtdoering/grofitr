@@ -20,9 +20,9 @@ library("dplyr")
 
 # INPUTS: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7ED-E2-P1.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/O7EM-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7ED.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-05-25-Stacker/2016-05-25-PlateInfo_O7EM.csv"
 
 truncTime = 50 # hours
 
@@ -31,7 +31,7 @@ NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF plot file
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7ED_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/O7EM_GroFit_df.csv"
 plot_dest =
   "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
@@ -372,9 +372,9 @@ for(i in 1:length(GroFitResults)){
   # Operations on plate-by-plate basis must be done above here-----------------
 }
 
-# # Cleanup - remove intermediate variables that aren't part of final output
-# rmlist <- keep(GroFit_df, GroFitResults, list = c(grep("_GroFit_df", ls(), value = T), PlateNames))
-# rm(rmlist, list = rmlist)
+# Cleanup - remove intermediate variables that aren't part of final output
+rmlist <- keep(list = grep("_GroFit_df", ls(), value = T))
+rm(rmlist, list = rmlist)
 
 dev.off()
 
