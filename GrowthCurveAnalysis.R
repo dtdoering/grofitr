@@ -20,9 +20,9 @@ library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/MFBL-E2-P1.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/MFBH-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/2016-01-07-PlateInfo_MFBL.csv"
+  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/2016-01-07-PlateInfo_MFBH.csv"
 
 truncTime = 40 # hours
 
@@ -31,7 +31,7 @@ NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF of plots
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFBL_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFBH_GroFit_df.csv"
 plot_dest =
   "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
 
@@ -125,7 +125,7 @@ DropColumns = c("Well.Row",
                 "Content")
 for(i in seq_along(PlateNames)){
   filename = PlateNames[[i]]
-  assign(filename, get(filename)[,-which(colnames(get(filename)) %in% DropColumns)])
+  assign(filename, get(filename)[,!(colnames(get(filename)) %in% DropColumns)])
 }
 
 # Run GroFit for all plates ==================================================
@@ -351,6 +351,8 @@ for(i in seq_along(GroFitResults)){
 }
 
 # Cleanup - remove intermediate variables that aren't part of final output ==
+# c(A.loCI, A.upCI, Aobs, curve, DataFile, DataLoc, df_dest, DropColumns, Experiment_list, ExperimentName, ExperimentNumber, ExperimentPlates, filename, GroFit_df, GroFitResults, GrowthData, i, j, k, lambda.upCI, lambda.loCI, lambdaobs, )
+
 rmlist <- keep(list = grep("_GroFit_df", ls(), value = T))
 rm(rmlist, list = rmlist)
 
