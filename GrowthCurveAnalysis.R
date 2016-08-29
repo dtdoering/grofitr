@@ -20,9 +20,9 @@ library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/MFBH-E2-P1.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5GM-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/Plate_Reader/2016-01-07-StackerData/2016-01-07-PlateInfo_MFBH.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5GM.csv"
 
 truncTime = 40 # hours
 
@@ -31,9 +31,9 @@ NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF of plots
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/MFBH_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5GM_GroFit_df.csv"
 plot_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/Plate_Reader/Output/"
+  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
 DataLoc = dirname(DataFile)
 setwd(DataLoc)
@@ -129,7 +129,9 @@ for(i in seq_along(PlateNames)){
 }
 
 # Run GroFit for all plates ==================================================
-GroFitResults = list()
+if(exists("GroFitResults")){
+  GroFitResults = list()
+}
 print(noquote("Running GroFit on all plates..."))
 for(i in seq_along(PlateNames)){
   GroFitResults[[i]] = list()
@@ -353,8 +355,8 @@ for(i in seq_along(GroFitResults)){
 # Cleanup - remove intermediate variables that aren't part of final output ==
 # c(A.loCI, A.upCI, Aobs, curve, DataFile, DataLoc, df_dest, DropColumns, Experiment_list, ExperimentName, ExperimentNumber, ExperimentPlates, filename, GroFit_df, GroFitResults, GrowthData, i, j, k, lambda.upCI, lambda.loCI, lambdaobs, )
 
-rmlist <- keep(list = grep("_GroFit_df", ls(), value = T))
-rm(rmlist, list = rmlist)
+# rmlist <- keep(list = grep("_GroFit", ls(), value = T))
+# rm(rmlist, list = rmlist)
 
 dev.off()
 
