@@ -20,9 +20,9 @@ library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5GM-E2-P1.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5GL-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5GM.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5GL.csv"
 
 truncTime = 40 # hours
 
@@ -31,7 +31,7 @@ NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF of plots
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5GM_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5GL_GroFit_df.csv"
 plot_dest =
   "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
@@ -84,9 +84,9 @@ PlateNames = unlist(PlateName_list)
 # Creates a list of time points used in each experiment
 # This list is based on the the numeric values not the long names (e.g. 1hr - 2hr)
 timePoints_list = list()
-for(i in seq_along(PlateNames)){
+for(i in PlateNames){
   timePoints_list[[i]] = list()
-  timePoints = data.frame(get(PlateNames[[i]])[1,4:ncol(get(PlateNames[[i]]))])
+  timePoints = data.frame(get(i)[1,4:ncol(get(i))])
   timePoints = apply(timePoints,2,function(x) gsub('\\.*(\\d*) h ?(\\d*).*', '\\1.0\\2',x))
   for(j in seq_along(timePoints)){
     timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
@@ -96,11 +96,11 @@ for(i in seq_along(PlateNames)){
 
 # Create a time matrix for each plate
 timeMatrix_list = list()
-for(i in seq_along(timePoints_list)){
+for(i in names(timePoints_list)){
   timeMatrix_list[[i]] = list()
   TIMES = rbind(timePoints_list[[i]]$timePoints)
   timePoints_m = data.frame(TIMES)
-  for(j in 2:nrow(get(PlateNames[[i]]))){
+  for(j in 2:nrow(get(i))){
     timePoints_m[j,] = timePoints_m
   }
   timeMatrix_list[[i]] = as.matrix(timePoints_m)
@@ -133,21 +133,23 @@ if(exists("GroFitResults")){
   GroFitResults = list()
 }
 print(noquote("Running GroFit on all plates..."))
-for(i in seq_along(PlateNames)){
+for(i in PlateNames){
   GroFitResults[[i]] = list()
-  for(j in 1:nrow(get(PlateNames[[i]]))){
+  for(j in 1:nrow(get(i))){
     GroFitResults[[i]][[j]] = list()
-    GroFitResults[[i]][[j]]$Plate = PlateNames[[i]]
+    GroFitResults[[i]][[j]]$Plate = i
 
-# Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
-    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(PlateNames[[i]])[j,1]
-    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(PlateNames[[i]])[j,2]
-    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(PlateNames[[i]])[j,3]
+    # Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(i)[j,1]
+
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(i)[j,2]
+
+    GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(i)[j,3]
 
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
     TimeData = TimeData[, 1:ncol(TimeData), drop = F]
 
-    GrowthData = t(data.frame(as.numeric(get(PlateNames[[i]])[j,])))
+    GrowthData = t(data.frame(as.numeric(get(i)[j,])))
     GrowthData = GrowthData[, 1:(ncol(TimeData)+3), drop = F]
 
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
@@ -155,10 +157,11 @@ for(i in seq_along(PlateNames)){
         suppress.messages = TRUE,
         fit.opt = "m",
         interactive = FALSE,
-        model.type = c("logistic"),
+        # model.type = c("logistic"),
         nboot.gc = 0,
-        smooth.gc  = 5)
+        # smooth.gc  = 5
         )
+    )
   }
   print(noquote(paste("  Finished with plate ", filename, ".", sep = "")))
 }
