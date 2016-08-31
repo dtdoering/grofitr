@@ -130,12 +130,12 @@ for(i in seq_along(PlateNames)){
 
 # Run GroFit for all plates ==================================================
 if(!exists("GroFitResults")){
-  print(noquote("GroFitResults not found - creating now"))
+  cat(noquote("GroFitResults not found - creating now"), '\n')
   GroFitResults = list()
 } else {
-  print(noquote("GroFitResults exists - Results will be added"))
+  cat(noquote("GroFitResults exists - Results will be added"), '\n')
 }
-print(noquote("Running GroFit on all plates..."))
+cat(noquote("Running GroFit on all plates..."), '\n')
 for(i in PlateNames){
   GroFitResults[[i]] = list()
   for(j in 1:nrow(get(i))){
@@ -167,12 +167,12 @@ for(i in PlateNames){
         )
     )
   }
-  print(noquote(paste("  Added results of plate ", filename, ".", sep = "")))
+  cat(noquote(paste("  Added results of plate ", filename, ".", sep = "")), '\n')
 }
-print(noquote("  Results complete!"))
+cat(noquote("  Results complete!"), '\n')
 
 # Creates a data table of lag, growth rate, and saturation ====================
-print(noquote("Summarizing results..."))
+cat(noquote("Summarizing results..."), '\n')
 GroFit_df = data.frame(
   Plate = character(),
   A = character(),
@@ -225,7 +225,7 @@ pdf(
   )
 )
 
-print(noquote("Plotting curves..."))
+cat(noquote("Plotting curves..."), '\n')
 for(i in seq_along(GroFitResults)){
   for(j in seq_along(GroFitResults[[i]])){
     times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
@@ -358,11 +358,11 @@ for(i in seq_along(GroFitResults)){
       )
     print(curve)
   }
-  print(noquote(paste("  Plate ", names(GroFitResults)[[i]], " plotted.", sep = "")))
+  cat(noquote(paste("  Plate ", names(GroFitResults)[[i]], " plotted.", sep = "")), '\n')
 }
 dev.off()
 
 # Cleanup - remove intermediate variables that aren't part of final output ==
 rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "DataFile", "DataLoc", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentNumber", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "NumberOfPlates", "od", "PlateInfo", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
 
-print(noquote("GroFit script complete."))
+cat(noquote("GroFit script complete."), '\n')
