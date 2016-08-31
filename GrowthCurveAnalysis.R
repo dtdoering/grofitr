@@ -221,8 +221,7 @@ pdf(
           collapse = "+"
         ),
         ".pdf",
-        sep = ""#,
-        # collapse = "+"
+        sep = ""
   )
 )
 
