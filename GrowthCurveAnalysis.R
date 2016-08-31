@@ -129,8 +129,11 @@ for(i in seq_along(PlateNames)){
 }
 
 # Run GroFit for all plates ==================================================
-if(exists("GroFitResults")){
+if(!exists("GroFitResults")){
+  print(noquote("GroFitResults not found - creating now"))
   GroFitResults = list()
+} else {
+  print(noquote("GroFitResults exists - Results will be added"))
 }
 print(noquote("Running GroFit on all plates..."))
 for(i in PlateNames){
@@ -141,10 +144,11 @@ for(i in PlateNames){
 
     # Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(i)[j,1]
-
+                                            # Should  ^ this be i?
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(i)[j,2]
-
+                                            # Should  ^ this be i?
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] = get(i)[j,3]
+                                            # Should  ^ this be i?
 
     TimeData = t(data.frame(timeMatrix_list[[i]][j,]))
     TimeData = TimeData[, 1:ncol(TimeData), drop = F]
@@ -163,7 +167,7 @@ for(i in PlateNames){
         )
     )
   }
-  print(noquote(paste("  Finished with plate ", filename, ".", sep = "")))
+  print(noquote(paste("  Added results of plate ", filename, ".", sep = "")))
 }
 print(noquote("  Results complete!"))
 
@@ -194,7 +198,7 @@ for(i in seq_along(GroFitResults)){
     GroFit_df[k,7] = GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
     k = 1 + k
   }
-  assign(paste(PlateNames[[i]], "_GroFit_df", sep = ""), GroFit_df)
+  assign(paste(names(GroFitResults)[[i]], "_GroFit_df", sep = ""), GroFit_df)
 }
 # # Add a column to include the replicate number for the experiment
 # GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df))
@@ -210,12 +214,15 @@ pdf(
           "%Y-%m-%d-%H%M"
         ),
         "_",
-        noquote(
-          unique(GroFit_df$Plate)
+        paste(
+          noquote(
+            unique(GroFit_df$Plate)
+          ),
+          collapse = "+"
         ),
         ".pdf",
-        sep = "",
-        collapse = "+"
+        sep = ""#,
+        # collapse = "+"
   )
 )
 
@@ -243,12 +250,12 @@ for(i in seq_along(GroFitResults)){
       lambdaobs = 0
     }
 
-# ggplot statements ===========================================================
-# growth data points ----------------------------------------------------------
+    # ggplot statements ===========================================================
+    # growth data points ----------------------------------------------------------
     curve = ggplot(temp_df, aes(x = Time, y = Absorbance))
     curve = curve + geom_point(pch = 19)
 
-# saturation point with confidence intervals ----------------------------------
+    # saturation point with confidence intervals ----------------------------------
     if(!is.null(Aobs) & !is.na(Aobs) & !is.nan(A.upCI) & !is.nan(A.loCI)){
       curve = curve +
       geom_hline(
@@ -273,7 +280,7 @@ for(i in seq_along(GroFitResults)){
         )
     }
 
-# lag time with confidence intervals ------------------------------------------
+    # lag time with confidence intervals ------------------------------------------
     if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
      curve = curve +
      geom_vline(
@@ -298,7 +305,7 @@ for(i in seq_along(GroFitResults)){
         )
     }
 
-# max growth rate with confidence intervals -----------------------------------
+    # max growth rate with confidence intervals -----------------------------------
     if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
       curve = curve +
       geom_abline(
@@ -326,7 +333,7 @@ for(i in seq_along(GroFitResults)){
         )
     }
 
-# format plots - axes, max/min, gridlines, etc. -------------------------------
+    # format plots - axes, max/min, gridlines, etc. -------------------------------
     curve = curve +
     ylim(0, 2) +
     scale_x_continuous(breaks = seq(0,150,10)) +
@@ -352,15 +359,11 @@ for(i in seq_along(GroFitResults)){
       )
     print(curve)
   }
-  print(noquote(paste("Plate ", filename, " finished.", sep = "")))
+  print(noquote(paste("  Plate ", names(GroFitResults)[[i]], " plotted.", sep = "")))
 }
+dev.off()
 
 # Cleanup - remove intermediate variables that aren't part of final output ==
-# c(A.loCI, A.upCI, Aobs, curve, DataFile, DataLoc, df_dest, DropColumns, Experiment_list, ExperimentName, ExperimentNumber, ExperimentPlates, filename, GroFit_df, GroFitResults, GrowthData, i, j, k, lambda.upCI, lambda.loCI, lambdaobs, )
-
-# rmlist <- keep(list = grep("_GroFit", ls(), value = T))
-# rm(rmlist, list = rmlist)
-
-dev.off()
+rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "DataFile", "DataLoc", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentNumber", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "NumberOfPlates", "od", "PlateInfo", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
 
 print(noquote("GroFit script complete."))
