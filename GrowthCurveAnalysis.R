@@ -1,4 +1,4 @@
-usage <- paste("This script is designed to run with data saved in the following format:
+usage <- "This script is designed to run with data saved in the following format:
    - Saved as CSV
    - The filename in the format of ExperimentalID-ReplicateNumber-PlateNumber
      for example:
@@ -6,7 +6,7 @@ usage <- paste("This script is designed to run with data saved in the following 
               - CGR represents the experimental identifier: Carbon Growth Rate
               - E1 represents the replicate of the experiment - replicate 1
               - P1 represents the plate number - plate 1
-This should be run on a single replicate at a time, replicates will be combined after the fact.")
+This should be run on a single replicate at a time, replicates will be combined after the fact."
 
 options(stringsAsFactors = FALSE)
 
@@ -20,9 +20,9 @@ library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
 DataFile =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5GL-E2-P1.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5CZ-E2-P1.csv"
 PlateInfo =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5GL.csv"
+  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5CZ.csv"
 
 truncTime = 40 # hours
 
@@ -31,7 +31,7 @@ NumberOfPlates= 1 # Add number of plates here
 
 # Set output destination of GroFit_df and PDF of plots
 df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5GL_GroFit_df.csv"
+  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5CZ_GroFit_df.csv"
 plot_dest =
   "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
@@ -209,17 +209,11 @@ write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Dat
 # Plot growth curves ======================================================
 pdf(
   paste(plot_dest,
-        format(
-          Sys.time(),
-          "%Y-%m-%d-%H%M"
-        ),
+        Sys.time() %>% format("%Y-%m-%d-%H%M"),
         "_",
-        paste(
-          noquote(
-            unique(GroFit_df$Plate)
-          ),
-          collapse = "+"
-        ),
+        GroFit_df$Plate %>%
+          unique() %>%
+          paste(collapse = "+"),
         ".pdf",
         sep = ""
   )
