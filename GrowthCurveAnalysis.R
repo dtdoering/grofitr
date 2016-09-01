@@ -207,37 +207,41 @@ for(i in seq_along(GroFitResults)){
 write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
 
 # Plot growth curves ======================================================
-pdf(
-  paste(plot_dest,
-        Sys.time() %>% format("%Y-%m-%d-%H%M"),
-        "_",
-        GroFit_df$Plate %>%
-          unique() %>%
-          paste(collapse = "+"),
-        ".pdf",
-        sep = ""
-  )
-)
 
-cat(noquote("Plotting curves..."), '\n')
-for(i in seq_along(GroFitResults)){
-  for(j in seq_along(GroFitResults[[i]])){
-    times = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
-    od = GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.data
+# Function to plot curves for an input plate name -------------------------
+# use with for(i in GroFitResults){makeplots(i)}
+
+
+makeplots <- function(platename){
+# -------------------------------------------------------------------------
+
+  pdf(
+    paste(plot_dest,
+          Sys.time() %>% format("%Y-%m-%d-%H%M"),
+          "_",
+          platename,
+          ".pdf",
+          sep = ""
+    )
+  )
+
+  for(well in seq_along(GroFitResults[[platename]])){
+    times = GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
+    od = GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.data
     temp_df = data.frame(cbind(times, od))
     colnames(temp_df) = c("Time", "Absorbance")
 
-    Aobs = summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$A.model
-    A.upCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.A.model.up
-    A.loCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.A.model.lo
+    Aobs = summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$A.model
+    A.upCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.A.model.up
+    A.loCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.A.model.lo
 
-    muobs =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$mu.model
-    mu.upCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.mu.model.up
-    mu.loCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.mu.model.lo
+    muobs =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$mu.model
+    mu.upCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.mu.model.up
+    mu.loCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.mu.model.lo
 
-    lambdaobs =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$lambda.model
-    lambda.upCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.lambda.model.up
-    lambda.loCI =  summary(GroFitResults[[i]][[j]]$GroFitResults$gcFit)$ci95.lambda.model.lo
+    lambdaobs =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$lambda.model
+    lambda.upCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.lambda.model.up
+    lambda.loCI =  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.lambda.model.lo
 
     if(is.null(lambdaobs)){
       lambdaobs = 0
@@ -341,20 +345,25 @@ for(i in seq_along(GroFitResults)){
     xlab("Time (h)") +
     ylab("Absorbance") +
 
-    ggtitle(paste(GroFitResults[[i]][[j]]$Plate, ": ",
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]],
+    ggtitle(paste(GroFitResults[[platename]][[well]]$Plate, ": ",
+      GroFitResults[[platename]][[well]][[colnames(get(PlateNames[[1]]))[1]]],
       " LICM(",
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]],
+      GroFitResults[[platename]][[well]][[colnames(get(PlateNames[[1]]))[2]]],
       ",",
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]],
+      GroFitResults[[platename]][[well]][[colnames(get(PlateNames[[1]]))[3]]],
       ")",
       sep = "")
       )
     print(curve)
   }
-  cat(noquote(paste("  Plate ", names(GroFitResults)[[i]], " plotted.", sep = "")), '\n')
+  dev.off()
 }
-dev.off()
+
+for(i in names(GroFitResults)){
+  cat(noquote(paste('  Plotting plate ', i, '...', sep = "")))
+  makeplots(i)
+  cat(noquote('Done.'), '\n')
+}
 
 # Cleanup - remove intermediate variables that aren't part of final output ==
 rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "DataFile", "DataLoc", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentNumber", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "NumberOfPlates", "od", "PlateInfo", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
