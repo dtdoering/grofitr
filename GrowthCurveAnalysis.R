@@ -19,51 +19,46 @@ library("magrittr")
 library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
-DataFile =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/R5CZ-E2-P1.csv"
-PlateInfo =
-  "~/1_Research/Lab/DATA/phenotyping/plate\ reader/2016-08-05-Stacker4/2016-08-01-PlateInfo_R5CZ.csv"
+
+for(i in seq_along(ExperimentNames)){
+  PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
+}
 
 truncTime = 40 # hours
 
-ExperimentNumber = 2 # Add replicate number here
-NumberOfPlates= 1 # Add number of plates here
-
 # Set output destination of GroFit_df and PDF of plots
-df_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5CZ_GroFit_df.csv"
-plot_dest =
-  "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
+df_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5D1_GroFit_df.csv"
+plot_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
-DataLoc = dirname(DataFile)
-setwd(DataLoc)
+setwd(path)
 
 # Load Additional Experimental data ===========================================
 # This data will comprise the first 3 columns of the data tables for grofit
-PlateInfo = read.csv(PlateInfo, header = TRUE, check.names = T)
-
-# Pull the plate name out of the file name
-ExperimentName <- DataFile %>% strsplit("[/.-]") %>% unlist %>% tail(4) %>% head(1)
 
 # Create file names for the saved plate reader data
-Experiment_list = list()
-for(i in 1:1){
-  Experiment_list[[i]] = list()
-  for(j in 1:NumberOfPlates){
-    Experiment_list[[i]][[j]] = list()
-    Experiment_list[[i]][[j]] = paste(ExperimentName,"-E", ExperimentNumber,"-P",j,".csv", sep = "")
-  }
+DataFiles <- list.files(path) %>% grep("TRno", ., value = T)
+
+# Create an array of object names using barcodes found in csv file
+PlateNames <- character()
+for(i in seq_along(DataFiles)){
+    PlateNames[i] <- read.csv(file = paste(path, DataFiles[i], sep = ""))[2,1] %>%
+        substr(6,12) %>%
+        substr(regexpr("[^0]",.),nchar(.))
 }
-ExperimentPlates=unlist(Experiment_list)
+
+PlateInfos <- list()
+for(i in seq_along(PlateNames)){
+    PlateInfos[[i]] <- paste(path, "PlateInfo_", PlateNames[i], ".csv", sep = "")
+    PlateInfos[[i]] <- read.csv(PlateInfos[[i]], header = TRUE, check.names = T)
+
+}
 
 # Load in plate data using file names in Experiment_list
-for(i in seq_along(ExperimentPlates)){
-  filename = paste(ExperimentName) # Creates an object name for each plate
-  assign(filename,
-         read.csv(ExperimentPlates[i],
+for(i in seq_along(DataFiles)){
+  assign(PlateNames[i], # Creates an object name for each plate
+         read.csv(DataFiles[i],
                   skip = which(
-                    grepl("Raw", readLines(DataFile)) |
-                    grepl("M\\d+", readLines(DataFile))
+                    grepl("Raw Data \\(600\\)", readLines(paste(path, DataFiles[i], sep = "")))
                   )[1]-1,
                   header = TRUE,
                   check.names = T,
@@ -71,15 +66,6 @@ for(i in seq_along(ExperimentPlates)){
          )
   )
 }
-
-# Create a list of object names assigned above
-# This name will consist of the experiment name name plus a number to represent each plate
-PlateName_list = list()
-for(i in 1:NumberOfPlates){
-  PlateName_list[[i]] = list()
-  PlateName_list[[i]] = paste(ExperimentName)#, i, sep = "")
-}
-PlateNames = unlist(PlateName_list)
 
 # Creates a list of time points used in each experiment
 # This list is based on the the numeric values not the long names (e.g. 1hr - 2hr)
@@ -113,13 +99,19 @@ for(i in seq_along(PlateNames)){
   assign(filename, get(filename)[-1,])
 }
 
-# Merge PlateInfo with growth data based on well
+# Merge Plate Info with growth data based on well
 for(i in seq_along(PlateNames)){
-  filename = PlateNames[[i]]
-  assign(filename, merge(PlateInfo[ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],get(filename), by = c("Well.Row", "Well.Col")))
+  filename = PlateNames[i]
+  assign(filename,
+    merge(
+      PlateInfos[[i]][ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],
+      get(filename),
+      by = c("Well.Row", "Well.Col")
+    )
+  )
 }
 
-# Drop columns no longer needed
+# Drop columns no longer needed from the plate data objects
 DropColumns = c("Well.Row",
                 "Well.Col",
                 "Content")
@@ -142,7 +134,7 @@ for(i in PlateNames){
     GroFitResults[[i]][[j]] = list()
     GroFitResults[[i]][[j]]$Plate = i
 
-    # Use the 3 columns taken from PlateInfo to name corresponding data in GroFitResults
+    # Use the 3 columns taken from Plate Info to name corresponding data in GroFitResults
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] = get(i)[j,1]
                                             # Should  ^ this be i?
     GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] = get(i)[j,2]
@@ -159,15 +151,14 @@ for(i in PlateNames){
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
       control = grofit.control(
         suppress.messages = TRUE,
-        fit.opt = "m",
+        fit.opt = "b", # what kind of fit? m=model, s=spline, *b=both
         interactive = FALSE,
-        # model.type = c("logistic"),
-        nboot.gc = 0,
+        nboot.gc = 100,
         # smooth.gc  = 5
         )
     )
   }
-  cat(noquote(paste("  Added results of plate ", filename, ".", sep = "")), '\n')
+  cat(noquote(paste("  Added results of plate ", i, ".", sep = "")), '\n')
 }
 cat(noquote("  Results complete!"), '\n')
 
@@ -200,8 +191,6 @@ for(i in seq_along(GroFitResults)){
   }
   assign(paste(names(GroFitResults)[[i]], "_GroFit_df", sep = ""), GroFit_df)
 }
-# # Add a column to include the replicate number for the experiment
-# GroFit_df$Replicate = rep("Rep2", nrow(GroFit_df))
 
 # Output GroFit_df to CSV
 write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
@@ -210,7 +199,6 @@ write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Dat
 
 # Function to plot curves for an input plate name -------------------------
 # use with for(i in GroFitResults){makeplots(i)}
-
 
 makeplots <- function(platename){
 # -------------------------------------------------------------------------
@@ -247,12 +235,12 @@ makeplots <- function(platename){
       lambdaobs = 0
     }
 
-    # ggplot statements ===========================================================
-    # growth data points ----------------------------------------------------------
+    # ggplot statements =======================================================
+    # growth data points ------------------------------------------------------
     curve = ggplot(temp_df, aes(x = Time, y = Absorbance))
     curve = curve + geom_point(pch = 19)
 
-    # saturation point with confidence intervals ----------------------------------
+    # saturation point with confidence intervals ------------------------------
     if(!is.null(Aobs) & !is.na(Aobs) & !is.nan(A.upCI) & !is.nan(A.loCI)){
       curve = curve +
       geom_hline(
@@ -277,7 +265,7 @@ makeplots <- function(platename){
         )
     }
 
-    # lag time with confidence intervals ------------------------------------------
+    # lag time with confidence intervals --------------------------------------
     if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
      curve = curve +
      geom_vline(
@@ -302,7 +290,7 @@ makeplots <- function(platename){
         )
     }
 
-    # max growth rate with confidence intervals -----------------------------------
+    # max growth rate with confidence intervals -------------------------------
     if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
       curve = curve +
       geom_abline(
@@ -330,7 +318,7 @@ makeplots <- function(platename){
         )
     }
 
-    # format plots - axes, max/min, gridlines, etc. -------------------------------
+    # format plots - axes, max/min, gridlines, etc. ---------------------------
     curve = curve +
     ylim(0, 2) +
     scale_x_continuous(breaks = seq(0,150,10)) +
@@ -366,6 +354,6 @@ for(i in names(GroFitResults)){
 }
 
 # Cleanup - remove intermediate variables that aren't part of final output ==
-rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "DataFile", "DataLoc", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentNumber", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "NumberOfPlates", "od", "PlateInfo", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
+rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
 
 cat(noquote("GroFit script complete."), '\n')
