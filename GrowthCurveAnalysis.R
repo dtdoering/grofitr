@@ -1,12 +1,3 @@
-usage <- "This script is designed to run with data saved in the following format:
-   - Saved as CSV
-   - The filename in the format of ExperimentalID-ReplicateNumber-PlateNumber
-     for example:
-                CGR-E1-P1
-              - CGR represents the experimental identifier: Carbon Growth Rate
-              - E1 represents the replicate of the experiment - replicate 1
-              - P1 represents the plate number - plate 1
-This should be run on a single replicate at a time, replicates will be combined after the fact."
 
 options(stringsAsFactors = FALSE)
 
@@ -19,7 +10,6 @@ library("magrittr")
 library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
-
 for(i in seq_along(ExperimentNames)){
   PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
 }
@@ -27,8 +17,7 @@ for(i in seq_along(ExperimentNames)){
 truncTime = 40 # hours
 
 # Set output destination of GroFit_df and PDF of plots
-df_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/R5D1_GroFit_df.csv"
-plot_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
+out_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
 setwd(path)
 
@@ -37,7 +26,6 @@ setwd(path)
 
 # Create file names for the saved plate reader data
 DataFiles <- list.files(path) %>% grep("TRno", ., value = T)
-
 # Create an array of object names using barcodes found in csv file
 PlateNames <- character()
 for(i in seq_along(DataFiles)){
@@ -177,23 +165,20 @@ GroFit_df <- data.frame(
 colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1], # "Homolog"
                               colnames(get(PlateNames[[1]]))[2], # "feConc"
                               colnames(get(PlateNames[[1]]))[3]) # "cuConc"
-k <- 1
+
 for(i in seq_along(GroFitResults)){
   for(j in seq_along(GroFitResults[[i]])){
-    GroFit_df[k,1] <- GroFitResults[[i]][[j]]$Plate
-    GroFit_df[k,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
-    GroFit_df[k,3] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
-    GroFit_df[k,4] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]]
-    GroFit_df[k,5] <- GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["lambda.model"]]
-    GroFit_df[k,6] <- GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["mu.model"]]
-    GroFit_df[k,7] <- GroFitResults[[i]][[j]]$GroFitResults[["gcFit"]][["gcTable"]][["A.model"]]
-    k <- 1 + k
+    GroFit_df[j,1] <- GroFitResults[[i]][[j]]$Plate
+    GroFit_df[j,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
+    GroFit_df[j,3] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
+    GroFit_df[j,4] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]]
+    GroFit_df[j,5] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$lambda.model
+    GroFit_df[j,6] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$mu.model
+    GroFit_df[j,7] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$A.model
   }
   assign(paste(names(GroFitResults)[[i]], "_GroFit_df", sep = ""), GroFit_df)
+  write.csv(GroFit_df, file = paste(out_dest, names(GroFitResults[i]), "_GroFit_df.csv", sep = ""))
 }
-
-# Output GroFit_df to CSV
-write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Date(), ".csv", sep = ""), row.names = FALSE)
 
 # Plot growth curves ======================================================
 
@@ -202,9 +187,8 @@ write.csv(GroFit_df, file = df_dest) # unique(GroFit_df$Replicate), "_", Sys.Dat
 
 makeplots <- function(platename){
 # -------------------------------------------------------------------------
-
   pdf(
-    paste(plot_dest,
+    paste(out_dest,
           Sys.time() %>% format("%Y-%m-%d-%H%M"),
           "_",
           platename,
@@ -212,7 +196,6 @@ makeplots <- function(platename){
           sep = ""
     )
   )
-
   for(well in seq_along(GroFitResults[[platename]])){
     times <- GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
     od <- GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.data
@@ -353,6 +336,6 @@ for(i in names(GroFitResults)){
 }
 
 # Cleanup - remove intermediate variables that aren't part of final output ====
-rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "df_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "plot_dest", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
+rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "truncTime", "usage"))
 
 cat(noquote("GroFit script complete."), '\n')
