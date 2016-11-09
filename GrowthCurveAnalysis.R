@@ -72,7 +72,7 @@ for (i in PlateNames) {
 timeMatrix_list <- list()
 for (i in names(timePoints_list)) {
   timeMatrix_list[[i]] <- list()
-  timePoints_m <- data.frame(rbind(timePoints_list[[i]]$timePoints))
+  timePoints_m <- timePoints_list[[i]]$timePoints %>% rbind() %>% data.frame()
   for (j in 2:nrow(get(i))) {
     timePoints_m[j,] <- timePoints_m
   }
