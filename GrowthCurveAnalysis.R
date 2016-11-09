@@ -10,44 +10,44 @@ library("magrittr")
 library("dplyr")
 
 # Inputs: Enter the proper locations and files for analysis ===================
-for(i in seq_along(ExperimentNames)){
-  PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
-}
+# Need to set 'ExperimentNames' and 'path' objects before running script
+
+# for (i in seq_along(ExperimentNames)){
+  # PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
+# }
 
 truncTime = 40 # hours
 
 # Set output destination of GroFit_df and PDF of plots
 out_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
-setwd(path)
+# setwd(path)
 
 # Load Additional Experimental data ===========================================
 # This data will comprise the first 3 columns of the data tables for grofit
 
 # Create file names for the saved plate reader data
-DataFiles <- list.files(path) %>% grep("TRno", ., value = T)
+DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
 # Create an array of object names using barcodes found in csv file
 PlateNames <- character()
-for(i in seq_along(DataFiles)){
-    PlateNames[i] <- read.csv(file = paste(path, DataFiles[i], sep = ""))[2,1] %>%
-        substr(6,12) %>%
-        substr(regexpr("[^0]",.),nchar(.))
+for (i in seq_along(DataFiles)) {
+    PlateNames[i] <- grep("ID1: ", readLines(paste(path, DataFiles[i], sep = "")), value = T) %>% substr(6,12) %>% substr(regexpr("[^0]", .), nchar(.))
 }
 
 PlateInfos <- list()
-for(i in seq_along(PlateNames)){
+for (i in seq_along(PlateNames)) {
     PlateInfos[[i]] <- paste(path, "PlateInfo_", PlateNames[i], ".csv", sep = "")
     PlateInfos[[i]] <- read.csv(PlateInfos[[i]], header = TRUE, check.names = T)
 
 }
 
 # Load in plate data using file names in Experiment_list
-for(i in seq_along(DataFiles)){
+for (i in seq_along(PlateNames)) {
   assign(PlateNames[i], # Creates an object name for each plate
-         read.csv(DataFiles[i],
+         read.csv(paste(path, DataFiles[i], sep = ""),
                   skip = which(
                     grepl("Raw Data \\(600\\)", readLines(paste(path, DataFiles[i], sep = "")))
-                  )[1]-1,
+                  )[1] - 1,
                   header = TRUE,
                   check.names = T,
                   row.names = NULL
@@ -58,11 +58,11 @@ for(i in seq_along(DataFiles)){
 # Creates a list of time points used in each experiment
 # This list is based on the the numeric values not the long names (e.g. 1hr - 2hr)
 timePoints_list <- list()
-for(i in PlateNames){
+for (i in PlateNames) {
   timePoints_list[[i]] <- list()
   timePoints <- data.frame(get(i)[1,4:ncol(get(i))])
   timePoints <- apply(timePoints,2,function(x) gsub('\\.*(\\d*) h ?(\\d*).*', '\\1.0\\2',x))
-  for(j in seq_along(timePoints)){
+  for (j in seq_along(timePoints)) {
     timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
   }
   timePoints_list[[i]]$timePoints <- as.numeric(timePoints[as.numeric(timePoints) <= truncTime & is.na(timePoints) == F])
@@ -70,11 +70,11 @@ for(i in PlateNames){
 
 # Create a time matrix for each plate
 timeMatrix_list <- list()
-for(i in names(timePoints_list)){
+for (i in names(timePoints_list)) {
   timeMatrix_list[[i]] <- list()
   TIMES <- rbind(timePoints_list[[i]]$timePoints)
   timePoints_m <- data.frame(TIMES)
-  for(j in 2:nrow(get(i))){
+  for (j in 2:nrow(get(i))) {
     timePoints_m[j,] <- timePoints_m
   }
   timeMatrix_list[[i]] <- as.matrix(timePoints_m)
@@ -82,13 +82,13 @@ for(i in names(timePoints_list)){
 
 # Modify the input raw data ===================================================
 # Remove the timepoint row in the data table
-for(i in seq_along(PlateNames)){
+for (i in seq_along(PlateNames)) {
   filename <- PlateNames[[i]]
   assign(filename, get(filename)[-1,])
 }
 
 # Merge Plate Info with growth data based on well
-for(i in seq_along(PlateNames)){
+for (i in seq_along(PlateNames)) {
   filename <- PlateNames[i]
   assign(filename,
     merge(
@@ -103,22 +103,22 @@ for(i in seq_along(PlateNames)){
 DropColumns <- c("Well.Row",
                 "Well.Col",
                 "Content")
-for(i in seq_along(PlateNames)){
+for (i in seq_along(PlateNames)) {
   filename <- PlateNames[[i]]
   assign(filename, get(filename)[,!(colnames(get(filename)) %in% DropColumns)])
 }
 
 # Run GroFit for all plates ==================================================
-if(!exists("GroFitResults")){
+if (!exists("GroFitResults")) {
   cat(noquote("GroFitResults not found - creating now"), '\n')
   GroFitResults <- list()
 } else {
   cat(noquote("GroFitResults exists - Results will be added"), '\n')
 }
 cat(noquote("Running GroFit on all plates..."), '\n')
-for(i in PlateNames){
+for (i in PlateNames) {
   GroFitResults[[i]] <- list()
-  for(j in 1:nrow(get(i))){
+  for (j in 1:nrow(get(i))) {
     GroFitResults[[i]][[j]] <- list()
     GroFitResults[[i]][[j]]$Plate <- i
 
@@ -134,14 +134,14 @@ for(i in PlateNames){
     TimeData <- TimeData[, 1:ncol(TimeData), drop = F]
 
     GrowthData <- t(data.frame(as.numeric(get(i)[j,])))
-    GrowthData <- GrowthData[, 1:(ncol(TimeData)+3), drop = F]
+    GrowthData <- GrowthData[, 1:(ncol(TimeData) + 3), drop = F]
 
     GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
       control = grofit.control(
         suppress.messages = TRUE,
         fit.opt = "b", # what kind of fit? m=model, s=spline, *b=both
         interactive = FALSE,
-        nboot.gc = 100,
+        nboot.gc = 100
         # smooth.gc  = 5
       )
     )
@@ -166,8 +166,8 @@ colnames(GroFit_df)[2:4] <- c(colnames(get(PlateNames[[1]]))[1], # "Homolog"
                               colnames(get(PlateNames[[1]]))[2], # "feConc"
                               colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 
-for(i in seq_along(GroFitResults)){
-  for(j in seq_along(GroFitResults[[i]])){
+for (i in seq_along(GroFitResults)) {
+  for (j in seq_along(GroFitResults[[i]])) {
     GroFit_df[j,1] <- GroFitResults[[i]][[j]]$Plate
     GroFit_df[j,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
     GroFit_df[j,3] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
@@ -181,12 +181,7 @@ for(i in seq_along(GroFitResults)){
 }
 
 # Plot growth curves ======================================================
-
-# Function to plot curves for an input plate name -------------------------
-# use with for(i in GroFitResults){makeplots(i)}
-
-makeplots <- function(platename){
-# -------------------------------------------------------------------------
+makeplots <- function(platename) {
   pdf(
     paste(out_dest,
           Sys.time() %>% format("%Y-%m-%d-%H%M"),
@@ -196,7 +191,7 @@ makeplots <- function(platename){
           sep = ""
     )
   )
-  for(well in seq_along(GroFitResults[[platename]])){
+  for (well in seq_along(GroFitResults[[platename]])) {
     times <- GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.time
     od <- GroFitResults[[platename]][[well]]$GroFitResults$gcFit$gcFittedModels[[1]]$raw.data
     temp_df <- data.frame(cbind(times, od))
@@ -214,7 +209,7 @@ makeplots <- function(platename){
     lambda.upCI <-  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.lambda.model.up
     lambda.loCI <-  summary(GroFitResults[[platename]][[well]]$GroFitResults$gcFit)$ci95.lambda.model.lo
 
-    if(is.null(lambdaobs)){
+    if (is.null(lambdaobs)) {
       lambdaobs <- 0
     }
 
@@ -224,14 +219,14 @@ makeplots <- function(platename){
     curve <- curve + geom_point(pch = 19)
 
     # saturation point with confidence intervals ------------------------------
-    if(!is.null(Aobs) & !is.na(Aobs) & !is.nan(A.upCI) & !is.nan(A.loCI)){
+    if (!is.null(Aobs) & !is.na(Aobs) & !is.nan(A.upCI) & !is.nan(A.loCI)) {
       curve <- curve +
       geom_hline(
         yintercept = Aobs,
         color = "blue"
       )
     }
-    if(!is.nan(A.upCI) & !is.na(A.upCI)){
+    if (!is.nan(A.upCI) & !is.na(A.upCI)) {
       curve <- curve +
       geom_hline(
         yintercept = A.upCI,
@@ -239,7 +234,7 @@ makeplots <- function(platename){
         lty = 2
       )
     }
-    if(!is.nan(A.loCI) & !is.na(A.loCI)){
+    if (!is.nan(A.loCI) & !is.na(A.loCI)) {
       curve <- curve +
       geom_hline(
         yintercept = A.loCI,
@@ -249,14 +244,14 @@ makeplots <- function(platename){
     }
 
     # lag time with confidence intervals --------------------------------------
-    if(!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
+    if (!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < truncTime) {
       curve <- curve +
       geom_vline(
         xintercept = lambdaobs,
         color = "green4"
       )
     }
-    if(!is.nan(lambda.upCI) & !is.na(lambda.upCI) & 0 < lambda.upCI & lambda.upCI < truncTime){
+    if (!is.nan(lambda.upCI) & !is.na(lambda.upCI) & 0 < lambda.upCI & lambda.upCI < truncTime) {
       curve <- curve +
       geom_vline(
         xintercept = lambda.upCI,
@@ -264,7 +259,7 @@ makeplots <- function(platename){
         lty = 2
       )
     }
-    if(!is.nan(lambda.loCI) & !is.na(lambda.loCI) & 0 < lambda.loCI & lambda.loCI < truncTime){
+    if (!is.nan(lambda.loCI) & !is.na(lambda.loCI) & 0 < lambda.loCI & lambda.loCI < truncTime) {
       curve <- curve +
       geom_vline(
         xintercept = lambda.loCI,
@@ -274,7 +269,7 @@ makeplots <- function(platename){
     }
 
     # max growth rate with confidence intervals -------------------------------
-    if(!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
+    if (!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime) {
       curve <- curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -282,7 +277,7 @@ makeplots <- function(platename){
         col = "red"
       )
     }
-    if(!is.nan(mu.upCI) & !is.na(mu.upCI)){
+    if (!is.nan(mu.upCI) & !is.na(mu.upCI)) {
       curve <- curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -291,7 +286,7 @@ makeplots <- function(platename){
         lty = 2
       )
     }
-    if(!is.nan(mu.loCI) & !is.na(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime){
+    if (!is.nan(mu.loCI) & !is.na(mu.loCI) & 0 < lambdaobs & lambdaobs < truncTime) {
       curve <- curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -329,7 +324,7 @@ makeplots <- function(platename){
   dev.off()
 }
 
-for(i in names(GroFitResults)){
+for (i in names(GroFitResults)) {
   cat(noquote(paste('  Plotting plate ', i, '...', sep = "")))
   makeplots(i)
   cat(noquote('Done.'), '\n')
