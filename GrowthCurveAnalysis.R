@@ -71,12 +71,9 @@ for (i in PlateNames) {
 # Create a time matrix for each plate
 timeMatrix_list <- list()
 for (i in names(timePoints_list)) {
-  timeMatrix_list[[i]] <- list()
-  timePoints_m <- timePoints_list[[i]]$timePoints %>% rbind() %>% data.frame()
-  for (j in 2:nrow(get(i))) {
-    timePoints_m[j,] <- timePoints_m
-  }
-  timeMatrix_list[[i]] <- as.matrix(timePoints_m)
+  timeMatrix_list[[i]] <- timePoints_list[[i]]$timePoints %>%
+    replicate(nrow(get(i)), .) %>%
+    t() %>% as.matrix()
 }
 
 # Modify the input raw data ===================================================
