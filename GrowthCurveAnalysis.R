@@ -322,13 +322,13 @@ makeplots <- function(platename) {
   dev.off()
 }
 
-for (i in names(GroFitResults)) {
-  cat(noquote(paste('  Plotting plate ', i, '...', sep = "")))
-  makeplots(i)
-  cat(noquote('Done.'), '\n')
-}
+# for (i in names(GroFitResults)) {
+#   cat(noquote(paste('  Plotting plate ', i, '...', sep = "")))
+#   makeplots(i)
+#   cat(noquote('Done.'), '\n')
+# }
 
-# Cleanup - remove intermediate variables that aren't part of final output ====
-rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "trunc", "usage"))
+# # Cleanup - remove intermediate variables that aren't part of final output ====
+# rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "trunc", "usage"))
 
 cat(noquote("GroFit script complete."), '\n')
