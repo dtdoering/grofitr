@@ -113,7 +113,7 @@ findrates <- function(path, trunctime = 1000,
   } else {
     cat(noquote("GroFitResults exists - Results will be added"), '\n')
   }
-  cat(noquote("Running GroFit on ", length(PlateNames), " plates..."), '\n')
+  cat(noquote(paste("Running GroFit on", length(PlateNames), "plates...")), '\n')
   for (i in PlateNames) {
     GroFitResults[[i]] <- list()
     for (j in 1:nrow(get(i))) {
