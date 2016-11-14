@@ -15,12 +15,12 @@ library("dplyr")
   # PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
 # }
 
-findrates <- function(path, trunc,
-                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
+findrates <- function(path, trunctime = 1000,
+                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\   reader/Output/") {
   if (missing(path)) {
     stop("'path' is undefined.")
   }
-  # trunc = 40 # hours
+  # trunctime = 40 # hours
   #
   # # Set output destination of GroFit_df and PDF of plots
   # out_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
@@ -31,7 +31,7 @@ findrates <- function(path, trunc,
   # Create file names for the saved plate reader data
   DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
   # Create an array of object names using barcodes found in csv file
-  PlateNames <- character()
+  PlateNames <- character() # Will become 4-digit barcodes
   for (i in seq_along(DataFiles)) {
       PlateNames[i] <- grep("ID1: ", readLines(paste(path, DataFiles[i], sep = "")), value = T) %>% substr(6,12) %>% substr(regexpr("[^0]", .), nchar(.))
   }
@@ -67,7 +67,7 @@ findrates <- function(path, trunc,
     for (j in seq_along(timePoints)) {
       timePoints[j] <- as.numeric(unlist(strsplit(timePoints[j], '\\.'))[1]) + as.numeric(unlist(strsplit(timePoints[j], '\\.'))[2])/60
     }
-    timePoints_list[[i]]$timePoints <- as.numeric(timePoints[as.numeric(timePoints) <= trunc & is.na(timePoints) == F])
+    timePoints_list[[i]]$timePoints <- as.numeric(timePoints[as.numeric(timePoints) <= trunctime & is.na(timePoints) == F])
   }
 
   # Create a time matrix for each plate
@@ -113,7 +113,7 @@ findrates <- function(path, trunc,
   } else {
     cat(noquote("GroFitResults exists - Results will be added"), '\n')
   }
-  cat(noquote("Running GroFit on all plates..."), '\n')
+  cat(noquote("Running GroFit on ", length(PlateNames), " plates..."), '\n')
   for (i in PlateNames) {
     GroFitResults[[i]] <- list()
     for (j in 1:nrow(get(i))) {
@@ -164,7 +164,8 @@ findrates <- function(path, trunc,
                                 colnames(get(PlateNames[[1]]))[2], # "feConc"
                                 colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 
-  for (i in seq_along(GroFitResults)) {
+  # Store growth parameters from GroFitResults in X_GroFit_df
+  for (i in seq_along(PlateNames)) {
     for (j in seq_along(GroFitResults[[i]])) {
       GroFit_df[j,1] <- GroFitResults[[i]][[j]]$Plate
       GroFit_df[j,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
@@ -179,7 +180,15 @@ findrates <- function(path, trunc,
   }
 }
 # Plot growth curves ======================================================
-makeplots <- function(platename) {
+makeplots <- function(platename,
+                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\   reader/Output/") {
+  # makeplots() accepts a single 4-character plate barcode as a string and generates a PDF
+  # containing a growth curve for each well from that plate annotated with the
+  # lag, growth rate, and saturation point called by GroFit.
+  #
+  #
+  # Example: makeplots("O7ED")
+
   pdf(
     paste(out_dest,
           Sys.time() %>% format("%Y-%m-%d-%H%M"),
@@ -242,14 +251,14 @@ makeplots <- function(platename) {
     }
 
     # lag time with confidence intervals --------------------------------------
-    if (!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < trunc) {
+    if (!is.null(lambdaobs) & !is.na(lambdaobs) & !is.nan(lambda.upCI) & !is.nan(lambda.loCI) & 0 < lambdaobs & lambdaobs < trunctime) {
       curve <- curve +
       geom_vline(
         xintercept = lambdaobs,
         color = "green4"
       )
     }
-    if (!is.nan(lambda.upCI) & !is.na(lambda.upCI) & 0 < lambda.upCI & lambda.upCI < trunc) {
+    if (!is.nan(lambda.upCI) & !is.na(lambda.upCI) & 0 < lambda.upCI & lambda.upCI < trunctime) {
       curve <- curve +
       geom_vline(
         xintercept = lambda.upCI,
@@ -257,7 +266,7 @@ makeplots <- function(platename) {
         lty = 2
       )
     }
-    if (!is.nan(lambda.loCI) & !is.na(lambda.loCI) & 0 < lambda.loCI & lambda.loCI < trunc) {
+    if (!is.nan(lambda.loCI) & !is.na(lambda.loCI) & 0 < lambda.loCI & lambda.loCI < trunctime) {
       curve <- curve +
       geom_vline(
         xintercept = lambda.loCI,
@@ -267,7 +276,7 @@ makeplots <- function(platename) {
     }
 
     # max growth rate with confidence intervals -------------------------------
-    if (!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < trunc) {
+    if (!is.null(muobs) & !is.na(muobs) & !is.nan(mu.upCI) & !is.nan(mu.loCI) & 0 < lambdaobs & lambdaobs < trunctime) {
       curve <- curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -284,7 +293,7 @@ makeplots <- function(platename) {
         lty = 2
       )
     }
-    if (!is.nan(mu.loCI) & !is.na(mu.loCI) & 0 < lambdaobs & lambdaobs < trunc) {
+    if (!is.nan(mu.loCI) & !is.na(mu.loCI) & 0 < lambdaobs & lambdaobs < trunctime) {
       curve <- curve +
       geom_abline(
         intercept = -(muobs*lambdaobs),
@@ -329,6 +338,6 @@ makeplots <- function(platename) {
 # }
 
 # # Cleanup - remove intermediate variables that aren't part of final output ====
-# rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "trunc", "usage"))
+# rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "trunctime", "usage"))
 
 cat(noquote("GroFit script complete."), '\n')
