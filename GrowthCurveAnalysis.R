@@ -11,30 +11,33 @@ library("dplyr")
 # Inputs: Enter the proper locations and files for analysis ===================
 # Need to set 'ExperimentNames' and 'path' objects before running script
 
-# for (i in seq_along(ExperimentNames)){
-  # PlateInfos[i] <- paste(path, "PlateInfo_", ExperimentNames[i], ".csv", sep = "")
-# }
+getPlateNames <- function(path) {
+  # Create file names for the saved plate reader data
+  DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
 
-findrates <- function(path, trunctime = 1000,
-                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\   reader/Output/") {
+  # Create a vector of object names using barcodes found in csv file
+  PlateNames <- character() # Will become 4-digit barcodes
+  for (i in seq_along(DataFiles)) {
+      PlateNames[i] <- grep("ID1: ",
+                            path %>% paste(DataFiles[i], sep = "") %>% readLines(),
+                            value = T) %>%
+                       substr(6,12) %>%
+                       substr(regexpr("[^0]", .),
+                              nchar(.))
+  }
+  assign("PlateNames", PlateNames, envir = .GlobalEnv)
+}
+
+findRates <- function(path,
+                      trunctime = 1000,
+                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
   if (missing(path)) {
     stop("'path' is undefined.")
   }
-  # trunctime = 40 # hours
-  #
-  # # Set output destination of GroFit_df and PDF of plots
-  # out_dest <- "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/"
 
-  # Load Additional Experimental data ===========================================
-  # This data will comprise the first 3 columns of the data tables for grofit
-
+  # Load Additional Experimental data ==========================================
   # Create file names for the saved plate reader data
   DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
-  # Create an array of object names using barcodes found in csv file
-  PlateNames <- character() # Will become 4-digit barcodes
-  for (i in seq_along(DataFiles)) {
-      PlateNames[i] <- grep("ID1: ", readLines(paste(path, DataFiles[i], sep = "")), value = T) %>% substr(6,12) %>% substr(regexpr("[^0]", .), nchar(.))
-  }
 
   PlateInfos <- list()
   for (i in seq_along(PlateNames)) {
@@ -148,7 +151,7 @@ findrates <- function(path, trunctime = 1000,
   }
   cat(noquote("  Results complete!"), '\n')
 
-  # Creates a data table of lag, growth rate, and saturation ====================
+  # Creates a data table of lag, growth rate, and saturation ==================
   cat(noquote("Summarizing results..."), '\n')
   GroFit_df <- data.frame(
     Plate = character(),
@@ -165,7 +168,7 @@ findrates <- function(path, trunctime = 1000,
                                 colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 
   # Store growth parameters from GroFitResults in X_GroFit_df
-  for (i in seq_along(PlateNames)) {
+  for (i in PlateNames) {
     for (j in seq_along(GroFitResults[[i]])) {
       GroFit_df[j,1] <- GroFitResults[[i]][[j]]$Plate
       GroFit_df[j,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
@@ -175,20 +178,20 @@ findrates <- function(path, trunctime = 1000,
       GroFit_df[j,6] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$mu.model
       GroFit_df[j,7] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$A.model
     }
-    assign(paste(names(GroFitResults)[[i]], "_GroFit_df", sep = ""), GroFit_df)
-    write.csv(GroFit_df, file = paste(out_dest, names(GroFitResults[i]), "_GroFit_df.csv", sep = ""))
+    assign(paste(i, "_GroFit_df", sep = ""), GroFit_df)
+    write.csv(GroFit_df, file = paste(out_dest, i, "_GroFit_df.csv", sep = ""))
   }
 }
 # Plot growth curves ======================================================
 makeplots <- function(platename,
-                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\   reader/Output/") {
+                      trunctime = 1000,
+                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
   # makeplots() accepts a single 4-character plate barcode as a string and generates a PDF
   # containing a growth curve for each well from that plate annotated with the
   # lag, growth rate, and saturation point called by GroFit.
   #
-  #
   # Example: makeplots("O7ED")
-
+  cat(noquote(paste('Plotting plate ', i, '...', sep = "")))
   pdf(
     paste(out_dest,
           Sys.time() %>% format("%Y-%m-%d-%H%M"),
@@ -329,15 +332,16 @@ makeplots <- function(platename,
     print(curve)
   }
   dev.off()
+  cat(noquote('Done.'), '\n')
 }
 
-# for (i in names(GroFitResults)) {
-#   cat(noquote(paste('  Plotting plate ', i, '...', sep = "")))
-#   makeplots(i)
-#   cat(noquote('Done.'), '\n')
-# }
-
-# # Cleanup - remove intermediate variables that aren't part of final output ====
-# rm(list = c("A.loCI", "A.upCI", "Aobs", "curve", "out_dest", "DropColumns", "Experiment_list", "ExperimentName", "ExperimentPlates", "filename", "GroFit_df", "GrowthData", "i", "j", "k", "lambda.loCI", "lambda.upCI", "lambdaobs", "mu.loCI", "mu.upCI", "muobs", "od", "PlateName_list", "PlateNames", "temp_df", "TimeData", "timeMatrix_list", "timePoints", "timePoints_list", "timePoints_m", "TIMES", "times", "trunctime", "usage"))
-
-cat(noquote("GroFit script complete."), '\n')
+cat(noquote("GroFit script sourced."), '\n')
+cat(noquote("Functions available:"))
+cat(noquote("
+1. findrates(path,
+             trunctime = 1000,
+             out_dest = \"/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/\")"))
+cat(noquote("
+2. makeplots(platename,
+             trunctime = 1000,
+             out_dest = \"/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/\")"), '\n')
