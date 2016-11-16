@@ -35,20 +35,17 @@ findRates <- function(path,
     stop("'path' is undefined.")
   }
 
-  # Load Additional Experimental data ==========================================
+  # Load Additional Experimental data =========================================
   # Create file names for the saved plate reader data
   DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
 
-  PlateInfos <- list()
+  PlateInfos <- list() # List of data frames indexed by number
   for (i in seq_along(PlateNames)) {
       PlateInfos[[i]] <- paste(path, "PlateInfo_", PlateNames[i], ".csv", sep = "")
       PlateInfos[[i]] <- read.csv(PlateInfos[[i]], header = TRUE, check.names = T)
 
-  }
-
   # Load in plate data using file names in Experiment_list
-  for (i in seq_along(PlateNames)) {
-    assign(PlateNames[i], # Creates an object name for each plate
+    assign(PlateNames[i], # Makes an object for each 4-digit barcode
            read.csv(paste(path, DataFiles[i], sep = ""),
                     skip = which(
                       grepl("Raw Data \\(600\\)", readLines(paste(path, DataFiles[i], sep = "")))
@@ -81,7 +78,7 @@ findRates <- function(path,
       t() %>% as.matrix()
   }
 
-  # Modify the input raw data ===================================================
+  # Modify the input raw data =================================================
   # Remove the timepoint row in the data table
   for (i in seq_along(PlateNames)) {
     filename <- PlateNames[[i]]
@@ -109,7 +106,7 @@ findRates <- function(path,
     assign(filename, get(filename)[,!(colnames(get(filename)) %in% DropColumns)])
   }
 
-  # Run GroFit for all plates ==================================================
+  # Run GroFit for all plates =================================================
   if (!exists("GroFitResults")) {
     cat(noquote("GroFitResults not found - creating now"), '\n')
     GroFitResults <- list()
@@ -117,27 +114,27 @@ findRates <- function(path,
     cat(noquote("GroFitResults exists - Results will be added"), '\n')
   }
   cat(noquote(paste("Running GroFit on", length(PlateNames), "plates...")), '\n')
-  for (i in PlateNames) {
-    GroFitResults[[i]] <- list()
-    for (j in 1:nrow(get(i))) {
-      GroFitResults[[i]][[j]] <- list()
-      GroFitResults[[i]][[j]]$Plate <- i
+  for (i in seq_along(PlateNames)) {
+    GroFitResults[[PlateNames[i]]] <- list()
+    for (j in 1:nrow(get(PlateNames[i]))) {
+      GroFitResults[[PlateNames[i]]][[j]] <- list()
+      GroFitResults[[PlateNames[i]]][[j]]$Plate <- PlateNames[i]
 
       # Use the 3 columns taken from Plate Info to name corresponding data in GroFitResults
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] <- get(i)[j,1]
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] <- get(PlateNames[i])[j,1]
                                               # Should  ^ this be i?
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] <- get(i)[j,2]
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] <- get(PlateNames[i])[j,2]
                                               # Should  ^ this be i?
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] <- get(i)[j,3]
+      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] <- get(PlateNames[i])[j,3]
                                               # Should  ^ this be i?
 
-      TimeData <- t(data.frame(timeMatrix_list[[i]][j,]))
+      TimeData <- t(data.frame(timeMatrix_list[[PlateNames[i]]][j,]))
       TimeData <- TimeData[, 1:ncol(TimeData), drop = F]
 
-      GrowthData <- t(data.frame(as.numeric(get(i)[j,])))
+      GrowthData <- t(data.frame(as.numeric(get(PlateNames[i])[j,])))
       GrowthData <- GrowthData[, 1:(ncol(TimeData) + 3), drop = F]
 
-      GroFitResults[[i]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
+      GroFitResults[[PlateNames[i]]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
         control = grofit.control(
           suppress.messages = TRUE,
           fit.opt = "b", # what kind of fit? m=model, s=spline, *b=both
@@ -147,12 +144,13 @@ findRates <- function(path,
         )
       )
     }
-    cat(noquote(paste("  Added results of plate ", i, ".", sep = "")), '\n')
+    cat(noquote(paste("  Added results of plate ", PlateNames[i], " (", i, "/", length(PlateNames), ")", sep = "")), '\n')
   }
+  assign("GroFitResults", GroFitResults, envir = .GlobalEnv)
   cat(noquote("  Results complete!"), '\n')
 
   # Creates a data table of lag, growth rate, and saturation ==================
-  cat(noquote("Summarizing results..."), '\n')
+  cat(noquote("Summarizing results..."))
   GroFit_df <- data.frame(
     Plate = character(),
     A = character(),
@@ -178,11 +176,12 @@ findRates <- function(path,
       GroFit_df[j,6] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$mu.model
       GroFit_df[j,7] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$A.model
     }
-    assign(paste(i, "_GroFit_df", sep = ""), GroFit_df)
+    assign(paste(i, "_GroFit_df", sep = ""), GroFit_df, envir = .GlobalEnv)
     write.csv(GroFit_df, file = paste(out_dest, i, "_GroFit_df.csv", sep = ""))
   }
+  cat(noquote('Done.'), '\n')
 }
-# Plot growth curves ======================================================
+# Plot growth curves ==========================================================
 makeplots <- function(platename,
                       trunctime = 1000,
                       out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
