@@ -1,4 +1,4 @@
-options(stringsAsFactors = FALSE)
+options(stringsAsFactors = FALSE, warn = 0)
 
 library("grofit")
 library("doBy")
@@ -121,11 +121,11 @@ findRates <- function(path,
       GroFitResults[[PlateNames[i]]][[j]]$Plate <- PlateNames[i]
 
       # Use the 3 columns taken from Plate Info to name corresponding data in GroFitResults
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]] <- get(PlateNames[i])[j,1]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[1]]] <- get(PlateNames[i])[j,1]
                                               # Should  ^ this be i?
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]] <- get(PlateNames[i])[j,2]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[2]]] <- get(PlateNames[i])[j,2]
                                               # Should  ^ this be i?
-      GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]] <- get(PlateNames[i])[j,3]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[3]]] <- get(PlateNames[i])[j,3]
                                               # Should  ^ this be i?
 
       TimeData <- t(data.frame(timeMatrix_list[[PlateNames[i]]][j,]))
@@ -146,7 +146,6 @@ findRates <- function(path,
     }
     cat(noquote(paste("  Added results of plate ", PlateNames[i], " (", i, "/", length(PlateNames), ")", sep = "")), '\n')
   }
-  assign("GroFitResults", GroFitResults, envir = .GlobalEnv)
   cat(noquote("  Results complete!"), '\n')
 
   # Creates a data table of lag, growth rate, and saturation ==================
@@ -166,23 +165,25 @@ findRates <- function(path,
                                 colnames(get(PlateNames[[1]]))[3]) # "cuConc"
 
   # Store growth parameters from GroFitResults in X_GroFit_df
-  for (i in PlateNames) {
-    for (j in seq_along(GroFitResults[[i]])) {
-      GroFit_df[j,1] <- GroFitResults[[i]][[j]]$Plate
-      GroFit_df[j,2] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[1]]]
-      GroFit_df[j,3] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[2]]]
-      GroFit_df[j,4] <- GroFitResults[[i]][[j]][[colnames(get(PlateNames[[1]]))[3]]]
-      GroFit_df[j,5] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$lambda.model
-      GroFit_df[j,6] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$mu.model
-      GroFit_df[j,7] <- GroFitResults[[i]][[j]]$GroFitResults$gcFit$gcTable$A.model
+  for (plate in PlateNames) {
+    for (well in seq_along(GroFitResults[[plate]])) {
+      GroFit_df[well,1] <- GroFitResults[[plate]][[well]]$Plate
+      GroFit_df[well,2] <- GroFitResults[[plate]][[well]][[colnames(get(PlateNames[[1]]))[1]]]
+      GroFit_df[well,3] <- GroFitResults[[plate]][[well]][[colnames(get(PlateNames[[1]]))[2]]]
+      GroFit_df[well,4] <- GroFitResults[[plate]][[well]][[colnames(get(PlateNames[[1]]))[3]]]
+      GroFit_df[well,5] <- GroFitResults[[plate]][[well]]$GroFitResults$gcFit$gcTable$lambda.model
+      GroFit_df[well,6] <- GroFitResults[[plate]][[well]]$GroFitResults$gcFit$gcTable$mu.model
+      GroFit_df[well,7] <- GroFitResults[[plate]][[well]]$GroFitResults$gcFit$gcTable$A.model
     }
-    assign(paste(i, "_GroFit_df", sep = ""), GroFit_df, envir = .GlobalEnv)
-    write.csv(GroFit_df, file = paste(out_dest, i, "_GroFit_df.csv", sep = ""))
+    assign(paste(plate, "_GroFit_df", sep = ""), GroFit_df, envir = .GlobalEnv)
+    write.csv(GroFit_df, file = paste(out_dest, plate, "_GroFit_df.csv", sep = ""))
   }
+  assign("GroFitResults", GroFitResults, envir = .GlobalEnv)
   cat(noquote('Done.'), '\n')
+
 }
 # Plot growth curves ==========================================================
-makeplots <- function(platename,
+makePlots <- function(platename,
                       trunctime = 1000,
                       out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
   # makeplots() accepts a single 4-character plate barcode as a string and generates a PDF
@@ -190,7 +191,7 @@ makeplots <- function(platename,
   # lag, growth rate, and saturation point called by GroFit.
   #
   # Example: makeplots("O7ED")
-  cat(noquote(paste('Plotting plate ', i, '...', sep = "")))
+  cat(noquote(paste('Plotting plate ', platename, '...', sep = "")))
   pdf(
     paste(out_dest,
           Sys.time() %>% format("%Y-%m-%d-%H%M"),
@@ -337,10 +338,12 @@ makeplots <- function(platename,
 cat(noquote("GroFit script sourced."), '\n')
 cat(noquote("Functions available:"))
 cat(noquote("
-1. findrates(path,
-             trunctime = 1000,
-             out_dest = \"/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/\")"))
+1. getPlateNames(path)"), '\n')
 cat(noquote("
-2. makeplots(platename,
+2. findRates(path,
+             trunctime = 1000,
+             out_dest = \"/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/\")"), '\n')
+cat(noquote("
+3. makePlots(platename,
              trunctime = 1000,
              out_dest = \"/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/\")"), '\n')
