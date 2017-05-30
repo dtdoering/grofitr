@@ -15,7 +15,12 @@ findRates <- function(path,
 
   # Load Additional Experimental data =========================================
   # Create file names for the saved plate reader data
-  DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
+  if (path %>% substr(nchar(.) - 2, nchar(.)) %>% tolower() == "csv") {
+    DataFiles <- basename(path)
+    path %<>% dirname() %>% paste("/", sep = "")
+  } else {
+    DataFiles <- list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
+  }
 
   PlateInfos <- list() # List of data frames indexed by number
   for (i in seq_along(PlateNames)) {
@@ -23,10 +28,10 @@ findRates <- function(path,
       PlateInfos[[i]] <- read.csv(PlateInfos[[i]], header = TRUE, check.names = T)
 
     # Load in plate data using file names
-    assign(PlateNames[i], # Makes an object for each 4-digit barcode
+    assign(PlateNames[i], # Makes an object for each plate
            read.csv(paste(path, DataFiles[i], sep = ""),
                     skip = which(
-                      grepl("Raw Data \\(600\\)", readLines(paste(path, DataFiles[i], sep = "")))
+                      grepl("Raw Data \\(\\d{3}\\)", readLines(paste(path, DataFiles[i], sep = "")))
                     )[1] - 1,
                     header = TRUE,
                     check.names = T,
