@@ -1,0 +1,7 @@
+# TODO:
+# [ ] Make independent of Plate info CSVs
+#       - Use Well col/row info for the 3 ID columns in grofit
+# [ ] Improve documentation
+#       - Do I want to require `PlateNames <- extract.barcodes(...)` first?
+# [ ] Make tidy
+#       - Reduce/remove "if" loops
