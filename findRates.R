@@ -8,7 +8,7 @@ library("dplyr")
 
 findRates <- function(path,
                       trunctime = 1000,
-                      out_dest = "/Users/dtdoering/1_Research/Lab/DATA/phenotyping/plate\ reader/Output/") {
+                      out_dest = "/Users/dtdoering/1_Research/DATA/phenotyping/plate\ reader/Output/") {
   if (missing(path)) {
     stop("'path' is undefined.")
   }
@@ -73,20 +73,11 @@ findRates <- function(path,
     filename <- PlateNames[i]
     assign(filename,
       merge(
-        PlateInfos[[i]][ , c("Well.Row", "Well.Col", "Homolog", "feConc", "cuConc")],
+        PlateInfos[[i]][ , c("Well.Row", "Well.Col", "Homolog")],
         get(filename),
         by = c("Well.Row", "Well.Col")
       )
     )
-  }
-
-  # Drop columns no longer needed from the plate data objects
-  DropColumns <- c("Well.Row",
-                  "Well.Col",
-                  "Content")
-  for (i in seq_along(PlateNames)) {
-    filename <- PlateNames[[i]]
-    assign(filename, get(filename)[,!(colnames(get(filename)) %in% DropColumns)])
   }
 
   # Run GroFit for all plates =================================================
@@ -104,19 +95,18 @@ findRates <- function(path,
       GroFitResults[[PlateNames[i]]][[j]]$Plate <- PlateNames[i]
 
       # Use the 3 columns taken from Plate Info to name corresponding data in GroFitResults
-      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[1]]] <- get(PlateNames[i])[j,1]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[i]]))[1]]] <- get(PlateNames[i])[j,1]
                                               # Should  ^ this be i?
-      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[2]]] <- get(PlateNames[i])[j,2]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[i]]))[2]]] <- get(PlateNames[i])[j,2]
                                               # Should  ^ this be i?
-      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[1]]))[3]]] <- get(PlateNames[i])[j,3]
+      GroFitResults[[PlateNames[i]]][[j]][[colnames(get(PlateNames[[i]]))[3]]] <- get(PlateNames[i])[j,3]
                                               # Should  ^ this be i?
 
       TimeData <- t(data.frame(timeMatrix_list[[PlateNames[i]]][j,]))
       TimeData <- TimeData[, 1:ncol(TimeData), drop = F]
 
       GrowthData <- t(data.frame(as.numeric(get(PlateNames[i])[j,])))
-      GrowthData <- GrowthData[, 1:(ncol(TimeData) + 3), drop = F]
-
+      GrowthData <- GrowthData[, 2:(ncol(TimeData) + 4), drop = F]
       GroFitResults[[PlateNames[i]]][[j]]$GroFitResults = grofit(TimeData, GrowthData,
         control = grofit.control(
           suppress.messages = TRUE,
@@ -126,6 +116,7 @@ findRates <- function(path,
           # smooth.gc  = 5
         )
       )
+      cat(j, " ")
     }
     cat(noquote(paste("  Added results of plate ", PlateNames[i], " (", i, "/", length(PlateNames), ")", sep = "")), '\n')
   }
