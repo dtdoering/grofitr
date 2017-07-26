@@ -3,3 +3,4 @@ GrowthCurveAnalysis_DD.R
 GrowthCurveAnalysis_DD2.R
 .Rapp.history
 .gitattributes
+*.Rproj.*
