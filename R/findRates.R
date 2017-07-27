@@ -1,10 +1,6 @@
-options(stringsAsFactors = FALSE, warn = 0)
+#' @export
 
-library("grofit")
-library("doBy")
-library("gdata")
-library("magrittr")
-library("dplyr")
+options(stringsAsFactors = FALSE, warn = 0)
 
 findRates <- function(path,
                       trunctime = 1000,

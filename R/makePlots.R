@@ -1,7 +1,4 @@
-library("RColorBrewer")
-library("ggplot2")
-library("magrittr")
-
+#' @export
 
 makePlots <- function(platename,
                       trunctime = 1000,

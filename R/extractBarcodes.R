@@ -1,6 +1,6 @@
-options(stringsAsFactors = FALSE, warn = 0)
+#' @export
 
-library("magrittr")
+options(stringsAsFactors = FALSE, warn = 0)
 
 extract.barcodes <- function(path) {
   # Create file names for the saved plate reader data
