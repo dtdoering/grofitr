@@ -4,3 +4,8 @@ GrowthCurveAnalysis_DD2.R
 .Rapp.history
 .gitattributes
 *.Rproj.*
+.Rproj.user
+packrat/lib*/
+packrat/src/
+.Rhistory
+.RData
