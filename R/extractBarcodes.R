@@ -1,10 +1,7 @@
 #' INPUT = full file path
 #' OUTPUT = Barcode extracted from ID1 field, if there is one there
 #'
-#' @import magrittr
-#' @import readr
-#' @import dplyr
-#' @import tidyr
+#' @importFrom magrittr %>%
 
 
 extract_barcode <- function(file) {
@@ -17,7 +14,8 @@ extract_barcode <- function(file) {
   barcodes <- character(length = 1) # Will become 4-digit barcodes
   for (i in seq_along(data.files)) {
       barcodes[i] <- grep("ID1: ",
-                          file %>% paste(data.files[i], sep = "") %>%
+                          file %>%
+                            paste(data.files[i], sep = "") %>%
                             readLines(warn = F),
                           value = T) %>%
                        substr(6, 12) %>%

@@ -8,14 +8,16 @@ Description: A package intended to facilitate cleaning and processing of
     parameters such as lag time, growth rate, saturation point, and area under
     the curve.
 Depends: 
-        R (>= 3.3.0),
+        R (>= 3.3.0)
+Imports:        
         grofit,
         dplyr,
         magrittr,
         ggplot2,
         RColorBrewer,
         tidyr,
-        readr
+        readr,
+        stringr
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

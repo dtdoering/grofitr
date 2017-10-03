@@ -1,4 +1,6 @@
-#'
+#' @import ggplot2
+#' @importFrom magrittr %>%
+#' @importFrom grDevices dev.off pdf
 
 makePlots <- function(platename,
                       trunctime = 1000,

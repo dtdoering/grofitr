@@ -14,18 +14,19 @@
 #' @author Drew T. Doering, \email{dtdoering@@wisc.edu}
 #'
 #' @export
-#' @import magrittr
+#' @importFrom magrittr %>% divide_by add
+#' @importFrom stringr str_replace_all str_split
 
 time_to_dbl <- function(t) {
   if ( grepl("h", t[1]) ) { # in "X h Y min" format
     t %>%
-      stringr::str_replace_all("(\\d+) h( (\\d+) min)?", "\\1.0\\3") %>%
-      stringr::str_split(string = ., pattern = "\\.") %>%
+      str_replace_all("(\\d+) h( (\\d+) min)?", "\\1.0\\3") %>%
+      str_split(string = ., pattern = "\\.") %>%
       sapply(FUN = function(x) {
         x %>% as.numeric() %>%
           `[`(2) %>%
-          magrittr::divide_by(60) %>%
-          magrittr::add(as.numeric(x[1]))
+          divide_by(60) %>%
+          add(as.numeric(x[1]))
       })
   } else if ( any(grepl('\\.', t)) ) { # already in decimal format
     t %>% as.numeric()
