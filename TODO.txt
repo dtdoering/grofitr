@@ -4,4 +4,6 @@
 # [ ] Improve documentation
 #       - Do I want to require `PlateNames <- extract.barcodes(...)` first?
 # [ ] Make tidy
-#       - Reduce/remove "if" loops
+#       - Reduce/remove "if" loops (vectorize)
+# [ ] Make usable with multiple plates at once
+#
