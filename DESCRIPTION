@@ -2,15 +2,21 @@ Package: grofitr
 Title: Prepare and analyze microbial growth data for use with R/grofit
 Version: 0.0.0.9000
 Authors@R: person("Drew", "Doering", email = "dtdoering@wisc.edu", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: A package intended to facilitate cleaning and processing of 
+    data for use with the package `grofit`. Take output from common plate
+    readers (such as BMG, Tecan, etc), process it, and estimate growth
+    parameters such as lag time, growth rate, saturation point, and area under
+    the curve.
 Depends: 
         R (>= 3.3.0),
         grofit,
         dplyr,
         magrittr,
         ggplot2,
-        RColorBrewer
-License: GPLv3
+        RColorBrewer,
+        tidyr,
+        readr
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1

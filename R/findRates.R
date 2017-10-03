@@ -1,4 +1,7 @@
-#' @export
+#'
+#'
+#'
+#'
 
 options(stringsAsFactors = FALSE, warn = 0)
 
