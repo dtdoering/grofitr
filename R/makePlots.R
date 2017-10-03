@@ -1,4 +1,4 @@
-#' @export
+#'
 
 makePlots <- function(platename,
                       trunctime = 1000,

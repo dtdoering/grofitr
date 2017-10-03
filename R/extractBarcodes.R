@@ -1,17 +1,23 @@
-#' @export
+#' INPUT = full file path
+#' OUTPUT = Barcode extracted from ID1 field, if there is one there
+#'
+#' @import magrittr
+#' @import readr
+#' @import dplyr
+#' @import tidyr
 
-options(stringsAsFactors = FALSE, warn = 0)
 
-extract.barcodes <- function(path) {
+extract_barcode <- function(file) {
+
   # Create file names for the saved plate reader data
-  data.files <-
-  list.files(path) %>% grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
+  data.files <- list.files(file) %>%
+    grep("(-E\\d-P\\d|TRno\\d*)\\.(CSV|csv)", ., value = T)
 
   # Create a vector of object names using barcodes found in csv file
-  barcodes <- character() # Will become 4-digit barcodes
+  barcodes <- character(length = 1) # Will become 4-digit barcodes
   for (i in seq_along(data.files)) {
       barcodes[i] <- grep("ID1: ",
-                          path %>% paste(data.files[i], sep = "") %>%
+                          file %>% paste(data.files[i], sep = "") %>%
                             readLines(warn = F),
                           value = T) %>%
                        substr(6, 12) %>%
