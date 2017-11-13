@@ -1,5 +1,11 @@
+#' Plot tidy plate reader data with ggplot2
+#'
+#' Uses ggplot2 to plot an entire plate of data in a 12 x 8 grid.
+#'
+#' @param data Plate reader data in tidy (long) format.
 #'
 #' @import ggplot2
+#'
 
 plot_plates <- function(data){
   ggplot(data, aes(x = time, y = OD)) +

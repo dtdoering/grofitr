@@ -1,7 +1,11 @@
-#' INPUT = full file path
-#' OUTPUT = Barcode extracted from ID1 field, if there is one there
+#' Extract plate barcodes from BMG plate reader data files
+#'
+#' Looks for a barcode present in the "ID1" field of plate reader data files
+#' output by BMG Labtech instruments, such as FLUOstar, SPECTROstar, etc.
 #'
 #' @importFrom magrittr %>%
+#'
+#' @param file Growth data file with header from which we will extract the plate barcode
 
 
 extract_barcode <- function(file) {

@@ -7,7 +7,7 @@
 time_to_dbl(t)
 }
 \arguments{
-\item{t}{A character vector of times in the form "HH h\[ MM min\]"}
+\item{t}{A character vector of times in the form "HH h\[ MM min\]" or "X.Y"}
 }
 \value{
 A numeric vector of times in hour-decimal form
