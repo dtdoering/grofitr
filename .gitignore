@@ -10,3 +10,4 @@ packrat/src/
 .Rhistory
 .RData
 TODO.txt
+inst/doc
