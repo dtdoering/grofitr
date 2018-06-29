@@ -18,6 +18,7 @@ Imports:
         tidyr,
         readr,
         stringr
+Remotes: cran/grofit
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
