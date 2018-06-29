@@ -1,6 +1,7 @@
 #' @importFrom magrittr %>% %$% extract2
 #' @importFrom dplyr mutate select rename
 #' @importFrom tidyr spread
+#' @importFrom tidyselect everything
 #' @import grofit
 #'
 
@@ -13,7 +14,7 @@ grofitr <- function(plate, ...) {
     mutate(OD = as.numeric(OD)) %>%
     spread(time, OD) %>%
     select(-Content) %>%
-    select(3,1,2,4:length(.))
+    select(3,1,2, everything())
 
   grofit(times,
          plate,
