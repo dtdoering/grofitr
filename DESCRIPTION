@@ -17,7 +17,8 @@ Imports:
         RColorBrewer,
         tidyr,
         readr,
-        stringr
+        stringr,
+        tidyselect
 Remotes: cran/grofit
 License: GPL-3
 Encoding: UTF-8
