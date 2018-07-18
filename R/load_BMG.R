@@ -9,7 +9,7 @@
 #' field of the file header.
 #'
 #' @importFrom readr read_csv
-#' @importFrom dplyr slice mutate rename_at vars select %>%
+#' @importFrom dplyr slice mutate rename_at vars select %>% funs
 #' @importFrom tidyr gather
 #'
 #' @export
