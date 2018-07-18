@@ -6,6 +6,8 @@
 #'
 #' @import ggplot2
 #'
+#' @export
+#'
 
 plot_plates <- function(data){
   ggplot(data, aes(x = time, y = OD)) +

@@ -11,6 +11,8 @@
 #' @importFrom readr read_csv
 #' @importFrom dplyr slice mutate rename_at vars select %>%
 #' @importFrom tidyr gather
+#'
+#' @export
 
 # Add option to extract barcode? Would store in "plate" column.
 
