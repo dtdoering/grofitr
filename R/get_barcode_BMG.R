@@ -7,6 +7,8 @@
 #' @param trim If TRUE, trim leading 0s off of the extracted barcode (default = FALSE).
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_extract
+#'
+#' @export
 
 get_barcode_BMG <- function(file, trim = FALSE) {
   if (trim == TRUE) {

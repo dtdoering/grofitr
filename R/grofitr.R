@@ -4,6 +4,7 @@
 #' @importFrom tidyselect everything
 #' @import grofit
 #'
+#' @export
 
 grofitr <- function(plate, ...) {
   timepoints <- plate %>% select(time) %>% unique() %>% unlist()
