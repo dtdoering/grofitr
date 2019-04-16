@@ -5,7 +5,7 @@ grofitr
 
 [![Travis-CI Build Status](https://travis-ci.org/dtdoering/grofitr.svg?branch=master)](https://travis-ci.org/dtdoering/grofitr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/dtdoering/grofitr?branch=master&svg=true)](https://ci.appveyor.com/project/dtdoering/grofitr)
 
-grofitr provides a tidy wrapper for the [grofit](https://cran.r-project.org/web/packages/grofit/grofit.pdf)
+grofitr provides a tidy wrapper for the [grofit](https://cran.r-project.org/web/packages/grofit/grofit.pdf) package, for ease of integration with the Tidyverse suite of data analysis packages.
 
 Installation
 ------------
