@@ -11,3 +11,5 @@ packrat/src/
 .RData
 TODO.txt
 inst/doc
+*.Rmd
+*.nb.html
