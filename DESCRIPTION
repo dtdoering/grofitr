@@ -7,9 +7,9 @@ Description: A package intended to facilitate cleaning and processing of
     readers (such as BMG, Tecan, etc), process it, and estimate growth
     parameters such as lag time, growth rate, saturation point, and area under
     the curve.
-Depends: 
+Depends:
         R (>= 3.3.0)
-Imports:        
+Imports:
         grofit,
         dplyr,
         magrittr,
@@ -17,8 +17,12 @@ Imports:
         RColorBrewer,
         tidyr,
         readr,
-        stringr
+        stringr,
+        tidyselect
+Remotes: cran/grofit
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr

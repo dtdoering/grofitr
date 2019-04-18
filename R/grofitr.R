@@ -1,8 +1,10 @@
-#' @importFrom magrittr %>%
+#' @importFrom magrittr %>% %$% extract2
 #' @importFrom dplyr mutate select rename
 #' @importFrom tidyr spread
+#' @importFrom tidyselect everything
 #' @import grofit
 #'
+#' @export
 
 grofitr <- function(plate, ...) {
   timepoints <- plate %>% select(time) %>% unique() %>% unlist()
@@ -13,9 +15,17 @@ grofitr <- function(plate, ...) {
     mutate(OD = as.numeric(OD)) %>%
     spread(time, OD) %>%
     select(-Content) %>%
-    select(3,1,2,4:length(.))
+    select(3,1,2, everything())
 
-  grofit(times, plate, ec50 = F,
-                 control = grofit::grofit.control(neg.nan.act = F, interactive = F,
-                                                  suppress.messages = T, ...)) %$% gcFit %$% gcTable %>% rename(`Well Row` = Well.Row, `Well Col` = Well.Col)
+  grofit(times,
+         plate,
+         ec50 = F,
+         control = grofit::grofit.control(neg.nan.act = F,
+                                          interactive = F,
+                                          suppress.messages = T,
+                                          ...)) %>%
+         extract2("gcFit") %>%
+         extract2("gcTable") %>%
+         rename(`Well Row` = Well.Row,
+                `Well Col` = Well.Col)
 }
