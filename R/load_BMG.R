@@ -7,7 +7,9 @@
 #' @param file Raw-text file output from BMG plate reader containing growth data
 #' @param get.barcode If TRUE, will search for a plate barcode in the "ID1"
 #' field of the file header.
-#' @param time.limits A numeric vector of length two providing two time points (in hours) designating the times before and after which the data should be truncated
+#' @param time.limits A numeric vector of length two providing two time points
+#' (in hours) designating the times before and after which the data should be
+#' truncated.
 #'
 #' @importFrom readr read_csv
 #' @importFrom dplyr slice mutate rename_at vars select %>% funs
