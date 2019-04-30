@@ -58,6 +58,7 @@ library(dplyr)
 library(magrittr)
 library(readr)
 library(grofit)
+library(tidyr)
 ```
 
 ```{r time_to_dbl, eval = F}
@@ -126,31 +127,65 @@ R73G
 ```
 
 ```{r grofitr, eval = F}
+#' @importFrom magrittr %>% %$% extract2
+#' @importFrom dplyr mutate select rename
+#' @importFrom tidyr spread
+#' @importFrom tidyselect everything
 #' @import grofit
-#' @import magrittr
+#'
+#' @export
 
-# TODO: Add option to truncate data at certain time
-# TODO: Add options for setting grofit.control() options
-grofitr <- function(plate, control = grofit.control(...)) {
+grofitr <- function(plate, ...) {
   timepoints <- plate %>% select(time) %>% unique() %>% unlist()
   n <- length(timepoints)
   times <- timepoints %>% rep(96) %>% matrix(c(n, 96)) %>% t()
-  
-  plate <- plate %>% 
-    dplyr::mutate(OD = as.numeric(OD)) %>% 
-    tidyr::spread(time, OD) %>%
-    dplyr::select(-Content) %>%
-    dplyr::select(3,1,2,4:length(.))# %>%
-  
-  grofit::grofit(times, plate, ec50 = F, control = control) %$% gcFit %$% gcTable
+
+  plate <- plate %>%
+    mutate(OD = as.numeric(OD)) %>%
+    spread(time, OD) %>%
+    select(-Content) %>%
+    select(3,1,2, everything())
+
+  grofit(times,
+         plate,
+         ec50 = F,
+         control = grofit::grofit.control(neg.nan.act = F,
+                                          interactive = F,
+                                          suppress.messages = T,
+                                          ...)) %>%
+         extract2("gcFit") %>%
+         extract2("gcTable") %>%
+         rename(`Well Row` = Well.Row,
+                `Well Col` = Well.Col)
 }
 
 R73G_results <- "~/1_Research/DATA/phenotyping/plate reader/2017-07-19-Stacker6/TRno1806.CSV" %>% 
-  load_BMG() %>% 
-  grofitr(control = grofit.control(interactive = FALSE, 
-                                   suppress.messages = TRUE, 
-                                   nboot.gc = 100)
-          )
+  load_BMG(time.limits = c(5, 95))
+
+timepoints <- R73G_results %>% select(time) %>% unique() %>% unlist()
+n <- length(timepoints)
+times <- timepoints %>% rep(96) %>% matrix(c(n, 96)) %>% t()
+
+R73G_results <- R73G_results %>%
+    mutate(OD = as.numeric(OD)) %>%
+    spread(time, OD) %>%
+    select(-Content) %>%
+    select(3,1,2, everything())
+
+grofit(time = times,
+       data = R73G_results,
+         ec50 = F,
+         control = grofit::grofit.control(neg.nan.act = F,
+                                          interactive = F,
+                                          suppress.messages = T,
+                                          )) %>%
+         extract2("gcFit") %>%
+         extract2("gcTable") %>%
+         rename(`Well Row` = Well.Row,
+                `Well Col` = Well.Col)
+
+R73G_results %>% grofitr()
+
 ```
 
 ```{r merge_meta, eval = F}
