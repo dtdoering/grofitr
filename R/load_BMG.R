@@ -27,6 +27,8 @@ load_BMG <- function(file, time.limits = c(0, Inf), get.barcode = FALSE) {
                        funs(x %>% slice(1) %>% select(-c(1:3)))) %>%
     dplyr::slice(-1) %>%
     tidyr::gather(time, OD, -`Well Row`, -`Well Col`, -Content) %>%
+    dplyr::mutate(.data = ., time = time_to_dbl(time), OD = as.numeric(OD)) %>%
+    dplyr::filter(time > time.limits[1], time < time.limits[2])
   if (get.barcode == TRUE) {
     x <-  dplyr::mutate(.data = x, plate = get_barcode_BMG(file))
   } else {
