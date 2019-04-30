@@ -14,7 +14,8 @@ grofitr <- function(plate, ...) {
   plate <- plate %>%
     mutate(OD = as.numeric(OD)) %>%
     spread(time, OD) %>%
-    select(-Content, 3,1,2, everything())
+    select(-Content) %>%
+    select(3,1,2, everything())
 
   grofit(times,
          plate,
